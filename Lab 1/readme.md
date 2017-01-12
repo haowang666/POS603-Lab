@@ -1,1 +1,1 @@
-#This file is for lab 1
+This folder is for lab 1
