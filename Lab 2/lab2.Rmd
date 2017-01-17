@@ -15,6 +15,7 @@ library(ggplot2)
 library(knitr)
 library(rmarkdown)
 library(readstata13)
+library(MASS)
 setwd('~/Dropbox/2017 Spring/ 603/lab/Lab 2')
 getwd()
 ```
