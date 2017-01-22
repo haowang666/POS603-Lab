@@ -1,0 +1,112 @@
+---
+title: "3D Plot"
+author: "Hao Wang"
+date: "January 22, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#Data : Boston Housing from MASS package
+link: <http://www.clemson.edu/economics/faculty/wilson/R-tutorial/analyzing_data.html>
+The Boston data frame has 506 rows and 14 columns.This data frame contains the following columns:
+1. crim:
+     per capita crime rate by town 
+2. zn: 
+    proportion of residential land zoned for lots over 25,000 sq.ft. 
+3. indus: 
+    proportion of non-retail business acres per town 
+4. chas: 
+    Charles River dummy variable (= 1 if tract bounds river; 0 otherwise) 
+5. nox: 
+    nitrogen oxides concentration (parts per 10 million) 
+6. rm: 
+    average number of rooms per dwelling 
+7. age: 
+    proportion of owner-occupied units built prior to 1940 
+8. dis: 
+    weighted mean of distances to five Boston employment centres 
+9. rad: 
+    index of accessibility to radial highways 
+10. tax: 
+    full-value property-tax rate per $10,000 
+11. ptratio: 
+    pupil-teacher ratio by town 
+12. black:
+    1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town 
+13. lstat: 
+    lower status of the population (percent) 
+14. medv:
+    median value of owner-occupied homes in $1000 
+
+
+
+
+
+#3D Scatterplots
+You can create a 3D scatterplot with the scatterplot3d package. Use the function scatterplot3d(x, y, z).
+```{r, warning=FALSE}
+library(MASS)
+library(scatterplot3d)
+attach(Boston)
+scatterplot3d(medv,dis,crim, main="3D Scatterplot")
+```
+
+
+#3D Scatterplot with Coloring and Vertical Drop Lines
+
+```{r}
+scatterplot3d(medv,dis,crim,highlight.3d=TRUE,
+  type="h", main="3D Scatterplot")
+```
+ 
+ 
+ 
+
+# 3D Scatterplot with Coloring and Regression Plane 
+
+```{r}
+s3d <-scatterplot3d(medv,dis,crim, pch=16, highlight.3d=TRUE,
+       main="3D Scatterplot")
+fit <- lm(medv ~ dis + crim) 
+s3d$plane3d(fit)
+```
+
+
+
+#Spinning 3D Scatterplots
+
+You can also create an interactive 3D scatterplot using the plot3d(x, y, z) in the rgl package.. It creates a spinning 3D scatterplot that can be rotated with the mouse. 
+
+```{r}
+library(rgl)
+plot3d(medv,dis,crim, col="red", size=3)
+```
+
+#Surface Plot Using Lattice
+You can create a surface plot with the Lattice package using the following codes.
+
+```{r}
+library(lattice)
+require(MASS)
+
+Boston.df = data.frame(medv = Boston$medv, lstat = Boston$lstat, dis = Boston$dis)
+Boston.loess = loess(medv ~ lstat+dis, data = Boston.df,
+  degree = 2, span = 0.25)
+Boston.fit = expand.grid(list(lstat = seq(1, 40, 1), dis = seq(0, 89, 1)))
+medv = predict(Boston.loess, newdata = Boston.fit)
+
+wireframe(medv ~ dis*lstat, data = Boston.fit,
+    xlab = "Distance to Working Place", ylab = "Percentage of Low Status Population",
+  main = "Surface Boston Housing",
+  drape = TRUE,
+  colorkey = TRUE,
+  screen = list(z = -60, x = -60)
+)
+```
+
+
+ 
