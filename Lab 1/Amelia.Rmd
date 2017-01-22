@@ -1,0 +1,41 @@
+---
+title: "Amelia"
+author: "Hao Wang"
+date: "January 22, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+setwd("D:/Dropbox/2017 Spring/ 603/lab/Lab 1")
+#setwd('~/Dropbox/2017 Spring/ 603/lab/Lab 1')
+getwd()
+```
+
+##Additional Training (if time permitted): Amelia
+The following materials borrow heavily from UC Berkeley *R for Data Science* workshop. <https://github.com/dlab-berkeley/R-for-Data-Science>
+
+```{r}
+large <-read.csv('https://raw.githubusercontent.com/haowang666/R-for-Data-Science/master/data/large.csv')
+summary(large)
+nrow(na.omit(large))
+```
+
+Package **Amelia** can impute missing when missingness is low and N is large
+
+```{r}
+require(Amelia)
+a <- amelia(large, m=1)
+print(a)
+```
+
+Amelia returns a list, when the first item is a list of your imputations. We only did one, so:
+
+```{r}
+large.imputed <- a[[1]][[1]]
+summary(large.imputed)
+```
