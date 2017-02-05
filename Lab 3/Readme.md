@@ -1,1 +1,1 @@
-Lab 3 covers distributions and bivariate tests.
+Lab 3 covers distributions
