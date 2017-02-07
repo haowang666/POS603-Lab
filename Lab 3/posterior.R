@@ -77,3 +77,8 @@ plot( p_grid , posterior , type="b" ,
 mtext( "100 points" )
 
 # reference web: http://stats.stackexchange.com/questions/58564/help-me-understand-bayesian-prior-and-posterior-distributions
+library(rethinking)
+samples<-sample(p_grid, prob=posterior, size = 1000, replace=TRUE)
+HPDI(samples, prob=.5)
+PI(samples, prob =.5)
+
