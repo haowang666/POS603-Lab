@@ -20,7 +20,7 @@ mtext( "100 points" )
 
 #---------------------------------------------
 #Changing prior
-#Now lest's making prior a normal distribution as a funtion of p_grid
+#Now let's make prior a normal distribution as a funtion of p_grid
 # define grid
 p_grid <- seq( from=0.001 , to=0.999 , length.out=100)
 # define prior
@@ -46,11 +46,12 @@ plot( p_grid , posterior , type="b" ,
 mtext( "100 points" )
 
 #---------------------------------------------------------
-#chaging prior again: 
+#changing prior again: 
 #According to the literature 60-80% chances will get a success. 
 #Take this information into account in your prior and calculate new posterior.
 #In this case we need to calculate prior distribution
 #make the mean of prior .7; let's make our prior a conjugate prior of posterior
+#Binomial is a family of beta distribution, we'll make our priot beta distribution here
 #let's make a pseudo sample size as 100
 #prior ~ beta(a,b); a = 0.7*100 = 70; b =0.3*100 = 30
 #---------------------------------------------------------
