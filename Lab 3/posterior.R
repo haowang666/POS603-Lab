@@ -76,4 +76,4 @@ plot( p_grid , posterior , type="b" ,
       xlab="probability of water" , ylab="posterior probability" )
 mtext( "100 points" )
 
-
+# reference web: http://stats.stackexchange.com/questions/58564/help-me-understand-bayesian-prior-and-posterior-distributions
