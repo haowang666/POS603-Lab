@@ -1,3 +1,3 @@
 Lab 1
-* markdown file
-* data manipulation.
+* introduction to R markdown
+* data manipulation
