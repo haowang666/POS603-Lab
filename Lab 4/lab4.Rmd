@@ -3,8 +3,8 @@ title: 'Lab 4: Linear Regressions'
 author: "Hao Wang"
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -143,9 +143,9 @@ We want to minimize $$\sum{\epsilon}^2 = {\epsilon}'{\epsilon}$$
 
 $$(Y-X\beta)'(Y-X\beta)$$
 Take derivatives 
-$$\frac{d}{d\beta}(Y-X\beta)'(Y-X\beta) = -2X'(Y-X\beta)$$
+$$\frac{d}{d\beta}(Y-X\beta)'(Y-X\beta) = -2X'(Y-X\beta) = 0$$
 Therefore $$X'Y=X'X\beta$$
-and $$\beta = (X'X)^{-1}(X'Y)$$
+and $$\beta = (X'X)^{-1}X'Y$$
 
 Let's do it in R
 ```{r, message=FALSE}
@@ -255,11 +255,12 @@ coef
 predict.test <- predict(lm, newdata = test) #use the previous fitted value to predict on test data.
 plot(predict.test, test$prestige)
 
-predict.point <- predict(lm, data.frame(education = 10, income=10000)) #point prediction
+
+predict.point <- predict(lm, data.frame(education = 10, income=10000))
 predict.point
 ```
 
-## (Optional) Boostrap
+## (Optional) Bootstrap
 The fundamental problem: we are fitting our regression as if we knew the population -- which is not true. 
 
 * The idea: We have just one dataset. When we compute a statistic on the data, we only know that one statistic - we don't see how variable that statistic is. The bootstrap creates a large number of datasets that we might have seen and computes the statistic on each of these datasets. Thus we get a distribution of the statistic. Key is the strategy to create data that "we might have seen".
@@ -335,7 +336,7 @@ lm2 <- lm(prestige ~income + education, data=test)
 
 ```{r, results='asis', message=FALSE}
 library(stargazer)
-stargazer(lm, lm2, title = "Table with Stargazer", style = "apsr",  omit.stat = c("rsq", "f","ser"))
+stargazer(lm, lm2, title = "Table with Stargazer", style = "apsr",  omit.stat = c("rsq", "f","ser"), type = "html")
 ```
 
 
