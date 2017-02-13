@@ -255,6 +255,8 @@ coef
 predict.test <- predict(lm, newdata = test) #use the previous fitted value to predict on test data.
 plot(predict.test, test$prestige)
 
+predict.point <- predict(lm, data.frame(education = 10, income=10000)) #point prediction
+predict.point
 ```
 
 ## (Optional) Boostrap
