@@ -1,0 +1,339 @@
+---
+title: 'Lab 4: Linear Regressions'
+author: "Hao Wang"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Linear Regression
+## Definition
+Linear regression attempts to model the relationship by fitting a linear equation to observed data. One variable is considered to be a dependent variable, and the others are considered to be explanatory variables. Linear regression with n explanatory variables have n + 1 parameters (with intercept). 
+
+$$\hat{y}_{i} =  \beta_0 + \beta_1x_1 + \beta_2x_2 +...\beta_nx_n$$
+Or in the Matrix format
+
+$$\hat{Y} = XB$$
+Where the $X$ matrix include the column $(1, x_{1i}, x_{2i}...)$ The $B$ matrix is the parameter matrix
+
+## Variations of Linear Regression
+Linear regression can take multiple formats:
+
+1. Regression through the origin
+$$\hat{y}_i = \beta_1x_1 + \beta_2x_2 +...\beta_nx_n$$
+code: 
+```{r}
+library(car)
+mydata <- Prestige
+#help("Prestige")
+lm(prestige ~ income -1, data = mydata)
+```
+
+
+2. Simple linear regression
+$$\hat{y}_i = \beta_0 + \beta_1x_1$$
+```{r}
+lm(prestige ~ income , data = mydata)
+```
+
+
+3. Multivariate linear regression
+
+$$\hat{y}_i = \beta_0 + \beta_1x_1 + \beta_2x_2 +...\beta_nx_n$$
+```{r}
+lm(prestige ~ income + education, data = mydata)
+```
+
+
+
+4. Ploynomial regression
+
+$$\hat{y}_i = \beta_0 + \beta_1x_1 + \beta_2{x_1}^2$$
+note that the identity function I( ) allows terms in the model to include normal mathematical symbols. I() is needed for the concern of collinearity. 
+```{r}
+lm(prestige ~ income + I(income^2), data=mydata)
+```
+
+
+5. Interaction
+
+5.a full interaction equation
+$$\hat{y}_i = \beta_0 + \beta_1x_1 + \beta_2{x_2} + \beta_3{x_{1}x_2}$$
+```{r}
+lm(prestige ~ income*education, data=mydata)
+```
+5.b the interaction term only
+
+$$\hat{y}_i = \beta_0 + \beta_3{x_{1}x_2}$$
+```{r}
+lm(prestige ~ income:education, data=mydata)
+```
+
+
+
+# Loss Function: Least Squares
+In linear regression, we want to minimize its loss funtion, which mostly known as the least squre method
+
+Def: $$L = \sum\limits_{i = 1}^{n} (y_{i} - \hat{y_i})^2$$
+
+Loss funtion can appear in other ways, for instance in LASSO <https://onlinecourses.science.psu.edu/stat857/node/158>, least square is penelized with $\lambda$. 
+
+
+
+
+
+# Calculate Linear Regression
+The idea is to minimize the loss function. We can achieve this in multiple ways.                      +
+
+
+Let's begin with simple linear regression with prestige and income
+
+## By Hand through calculus
+
+$$L = \sum\limits_{i = 1}^{n} (y_{i} - \hat{y_i})^2$$
+$$\hat{y}_{i} = \beta_0 + \beta_{1}x_i$$
+Take derivatives 
+$$L =  \sum\limits_{i = 1}^{n} (y_{i} - \beta_0 + \beta_{1}x_i)^2$$
+$$\frac{d(L)}{d(\beta_0)} = -2 \sum\limits_{i = 1}^{n} (y_{i} - \beta_0 + \beta_{1}x_i) =0$$
+
+$$\frac{d(L)}{d(\beta_1)} = -2 \sum\limits_{i = 1}^{n} (y_{i} - \beta_0 + \beta_{1}x_i)x_i =0$$
+solve these equations, we get
+
+$$\beta_1 =  \frac{\sum(x_i -\bar{x})(y_i -\bar{y})}{\sum(x_i -\bar{x})^2}$$
+$$\beta_0 = \bar{y} - \beta_1\bar{x}$$
+Let's do that in R
+```{r, message=FALSE}
+attach(mydata)
+b1.upper <- sum(
+  (education-mean(education))*
+    (prestige -mean(prestige))
+)
+      
+b1.lower <- sum(
+  (education -mean(education))^2
+)
+
+b1 <- b1.upper / b1.lower
+b0 <- mean(prestige) - b1*mean(education)
+b1 
+b0
+lm(prestige ~ education)
+```
+### - Practice question 1: calculate prestige ~ income based on the formula above, compare your result with lm(prestige ~ income)
+
+
+
+## By Matrix
+$$Y = X\beta + \epsilon$$
+$$\mathbf{\epsilon} = \left[\begin{array}
+{r}
+\epsilon_1 \\
+\epsilon_2 \\
+... \\
+\epsilon_n
+\end{array}\right]$$
+
+
+We want to minimize $$\sum{\epsilon}^2 = {\epsilon}'{\epsilon}$$
+
+$$(Y-X\beta)'(Y-X\beta)$$
+Take derivatives 
+$$\frac{d}{d\beta}(Y-X\beta)'(Y-X\beta) = -2X'(Y-X\beta)$$
+Therefore $$X'Y=X'X\beta$$
+and $$\beta = (X'X)^{-1}(X'Y)$$
+
+Let's do it in R
+```{r, message=FALSE}
+X <- data.frame(1, education) # 1 is needed for intercept
+X <- as.matrix(X)
+y <- mydata$prestige
+
+beta <-solve(t(X)%*%X)%*%t(X)%*%y #solve function returns inverse, t() returns transpose
+beta
+```
+### - Practice question: calculate linear regression prestiage ~ income + education in matrix notation
+
+```{r, message=FALSE}
+attach(mydata)
+# X <- data.frame(1, ?, ?)
+# X <- ?
+# y <- ?
+```
+
+
+
+
+## (optional) By Gradient Descent
+Gradient decent is a machine learning algorithm fitting data, the main idea is to take the partial derivative of the cost function with respect to theta. That gradient, multiplied by a learning rate, becomes the update rule for the estimated values of the parameters. Iterate and things should converge nicely.
+
+cost funtion
+$$J(\theta) = \frac{1}{2m}\sum\limits_{i = 1}^{n}(h_{\theta}(x^{(i)}) - y^{(i)})^2 $$
+In action, gradient descent gradually approaches optimal values for $\theta$. How gradual depends on the learning rate, $\alpha$. $h_{\theta}$ is the prediction funtion.
+
+
+
+```{r}
+# generate random data in which y is a noisy function of x
+x <- runif(1000, -5, 5)
+y <- x + rnorm(1000) + 3
+
+# fit a linear model
+res <- lm( y ~ x )
+print(res)
+
+# plot the data and the model
+plot(x,y, col=rgb(0.2,0.4,0.6,0.4), main='Linear regression by gradient descent')
+abline(res, col='blue')
+```
+
+
+```{r}
+# squared error cost function
+cost <- function(X, y, theta) {
+  sum( (X %*% theta - y)^2 ) / (2*length(y))
+}
+
+# learning rate and iteration limit
+alpha <- 0.01
+num_iters <- 1000
+
+# keep history
+cost_history <- double(num_iters)
+theta_history <- list(num_iters)
+
+# initialize coefficients
+theta <- matrix(c(0,0), nrow=2)
+
+# add a column of 1's for the intercept coefficient
+X <- cbind(1, matrix(x))
+
+# gradient descent
+for (i in 1:num_iters) {
+  error <- (X %*% theta - y)
+  delta <- t(X) %*% error / length(y)
+  theta <- theta - alpha * delta
+  cost_history[i] <- cost(X, y, theta)
+  theta_history[[i]] <- theta
+}
+
+print(theta)
+
+# plot data and converging fit
+plot(x,y, col=rgb(0.2,0.4,0.6,0.4), main='Linear regression by gradient descent')
+for (i in c(1,3,6,10,14,seq(20,num_iters,by=10))) {
+  abline(coef=theta_history[[i]], col=rgb(0.8,0,0,0.3))
+}
+abline(coef=theta, col='blue')
+```
+
+
+
+# Interpret Linear Regression  Results
+
+## Extract information form the summary()
+```{r}
+#let's split our data into two parts first: train and test. 
+set.seed(99)
+n <-nrow(mydata)
+n1 <- floor(n/1.5) #train
+n2 <- n -n1        #test
+ii <- sample(1:n, n) # a funtion of sample
+train <- mydata[ii[1:n1],]
+test  <- mydata[ii[n1+1:n2],]
+
+lm <- lm(prestige ~ education + income, data =train)
+summary(lm)
+fit <- lm$fitted.values #fitted value
+resid <- lm$residuals  #residuals
+coef <- summary(lm)$coefficients #coefficients matrix
+coef
+predict.test <- predict(lm, newdata = test) #use the previous fitted value to predict on test data.
+plot(predict.test, test$prestige)
+
+```
+
+## (Optional) Boostrap
+The fundamental problem: we are fitting our regression as if we knew the population -- which is not true. 
+
+* The idea: We have just one dataset. When we compute a statistic on the data, we only know that one statistic - we don't see how variable that statistic is. The bootstrap creates a large number of datasets that we might have seen and computes the statistic on each of these datasets. Thus we get a distribution of the statistic. Key is the strategy to create data that "we might have seen".
+
+* Benefits: more consistent standard error
+
+### Bootstrap 95% CI for R-Squared
+```{r, message=FALSE}
+library(boot)
+
+# Bootstrap 95% CI for R-Squared
+# function to obtain R-Squared from the data 
+rsq <- function(formula, data, indices) {
+  d <- data[indices,] # allows boot to select sample 
+  fit <- lm(formula, data=d)
+  return(summary(fit)$r.square)
+} 
+
+# bootstrapping with 1000 replications 
+set.seed(99)
+results <- boot(data=mydata, statistic=rsq, 
+  	R=1000, formula=prestige~ income+education)
+
+# view results
+results 
+plot(results)
+
+# get 95% confidence interval 
+boot.ci(results, type="bca")
+
+```
+
+### Bootstrap CI for regression coefficients
+```{r, message=FALSE}
+# Bootstrap 95% CI for regression coefficients 
+# function to obtain regression weights 
+bs <- function(formula, data, indices) {
+  d <- data[indices,] # allows boot to select sample 
+  fit <- lm(formula, data=d)
+  return(coef(fit)) 
+} 
+# bootstrapping with 1000 replications 
+set.seed(99)
+results <- boot(data=mydata, statistic=bs, 
+  	R=1000, formula=prestige~income+education)
+
+# view results
+results
+plot(results, index=1) # intercept 
+plot(results, index=2) # income
+plot(results, index=3) # education
+
+# get 95% confidence intervals 
+boot.ci(results, type="bca", index=1) # intercept 
+boot.ci(results, type="bca", index=2) # income 
+boot.ci(results, type="bca", index=3) # education
+```
+
+# Report
+
+##`stargazer'
+* **Stargazer** <https://cran.r-project.org/web/packages/stargazer/vignettes/stargazer.pdf>
+* **stargazer cheatsheet** <http://jakeruss.com/cheatsheets/stargazer.html>
+
+* **list of stats code**
+<https://rdrr.io/cran/stargazer/>
+
+```{r, message=FALSE}
+lm <- lm(prestige ~income + education, data=train)
+lm2 <- lm(prestige ~income + education, data=test)
+```
+
+
+```{r, results='asis', message=FALSE}
+library(stargazer)
+stargazer(lm, lm2, title = "Table with Stargazer", style = "apsr",  omit.stat = c("rsq", "f","ser"))
+```
+
+
