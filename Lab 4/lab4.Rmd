@@ -3,13 +3,29 @@ title: 'Lab 4: Linear Regressions'
 author: "Hao Wang"
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+# Pearson and Spearman Correlation
+<http://support.minitab.com/en-us/minitab-express/1/help-and-how-to/modeling-statistics/regression/supporting-topics/basics/a-comparison-of-the-pearson-and-spearman-correlation-methods/#comparison-of-pearson-and-spearman-coefficients>
+
+
+
+
+# t-test and Bayesian t-test
+Source: BEST software <http://www.indiana.edu/~kruschke/BEST/>
+## Installation JAGS
+```{r, message=FALSE}
+#install.packages('rjags')
+library(rjags)
+```
+
+
+
 
 # Linear Regression
 ## Definition
@@ -54,9 +70,13 @@ lm(prestige ~ income + education, data = mydata)
 4. Ploynomial regression
 
 $$\hat{y}_i = \beta_0 + \beta_1x_1 + \beta_2{x_1}^2$$
-note that the identity function I( ) allows terms in the model to include normal mathematical symbols. I() is needed for the concern of collinearity. 
+note that the identity function I( ) allows terms in the model to include normal mathematical symbols. Potential collinearity issue: center x
 ```{r}
 lm(prestige ~ income + I(income^2), data=mydata)
+#--------------------------------------------------
+#center income
+mydata$income.cen <- mydata$income - mean(mydata$income)
+lm(prestige ~ income.cen + I(income.cen^2), data=mydata)
 ```
 
 
@@ -76,12 +96,12 @@ lm(prestige ~ income:education, data=mydata)
 
 
 
-# Loss Function: Least Squares
-In linear regression, we want to minimize its loss funtion, which mostly known as the least squre method
+# Loss Function: Ordinary Least Squares (OLS)
+In linear regression, we want to minimize its loss funtion, which mostly known as the ordinary least square (OLS) method
 
 Def: $$L = \sum\limits_{i = 1}^{n} (y_{i} - \hat{y_i})^2$$
 
-Loss funtion can appear in other ways, for instance in LASSO <https://onlinecourses.science.psu.edu/stat857/node/158>, least square is penelized with $\lambda$. 
+Loss funtion can appear in other ways, for instance in LASSO <https://onlinecourses.science.psu.edu/stat857/node/158>, least square is penalized with $\lambda$. 
 
 
 
@@ -93,7 +113,7 @@ The idea is to minimize the loss function. We can achieve this in multiple ways.
 
 Let's begin with simple linear regression with prestige and income
 
-## By Hand through calculus
+## By calculus
 
 $$L = \sum\limits_{i = 1}^{n} (y_{i} - \hat{y_i})^2$$
 $$\hat{y}_{i} = \beta_0 + \beta_{1}x_i$$
@@ -140,6 +160,7 @@ $$\mathbf{\epsilon} = \left[\begin{array}
 
 
 We want to minimize $$\sum{\epsilon}^2 = {\epsilon}'{\epsilon}$$
+Note: tranpose notation can also be written as $X^T$
 
 $$(Y-X\beta)'(Y-X\beta)$$
 Take derivatives 
@@ -156,7 +177,7 @@ y <- mydata$prestige
 beta <-solve(t(X)%*%X)%*%t(X)%*%y #solve function returns inverse, t() returns transpose
 beta
 ```
-### - Practice question: calculate linear regression prestiage ~ income + education in matrix notation
+### - Practice question 2: calculate linear regression prestige ~ income + education in matrix notation
 
 ```{r, message=FALSE}
 attach(mydata)
@@ -168,7 +189,7 @@ attach(mydata)
 
 
 
-## (optional) By Gradient Descent
+## (Take home practice) By Gradient Descent
 Gradient decent is a machine learning algorithm fitting data, the main idea is to take the partial derivative of the cost function with respect to theta. That gradient, multiplied by a learning rate, becomes the update rule for the estimated values of the parameters. Iterate and things should converge nicely.
 
 cost funtion
@@ -215,7 +236,7 @@ X <- cbind(1, matrix(x))
 # gradient descent
 for (i in 1:num_iters) {
   error <- (X %*% theta - y)
-  delta <- t(X) %*% error / length(y)
+  delta <- t(X) %*% error / length(y) #delta is the mean residual
   theta <- theta - alpha * delta
   cost_history[i] <- cost(X, y, theta)
   theta_history[[i]] <- theta
@@ -235,7 +256,7 @@ abline(coef=theta, col='blue')
 
 # Interpret Linear Regression  Results
 
-## Extract information form the summary()
+## Extract information from the summary()
 ```{r}
 #let's split our data into two parts first: train and test. 
 set.seed(99)
@@ -254,10 +275,12 @@ coef <- summary(lm)$coefficients #coefficients matrix
 coef
 predict.test <- predict(lm, newdata = test) #use the previous fitted value to predict on test data.
 plot(predict.test, test$prestige)
+cor(predict.test, test$prestige)
 
 
 predict.point <- predict(lm, data.frame(education = 10, income=10000))
 predict.point
+
 ```
 
 ## (Optional) Bootstrap
@@ -321,12 +344,10 @@ boot.ci(results, type="bca", index=3) # education
 
 # Report
 
-##`stargazer'
+## Package 'stargazer'
 * **Stargazer** <https://cran.r-project.org/web/packages/stargazer/vignettes/stargazer.pdf>
 * **stargazer cheatsheet** <http://jakeruss.com/cheatsheets/stargazer.html>
-
-* **list of stats code**
-<https://rdrr.io/cran/stargazer/>
+* **list of stats code** <https://rdrr.io/cran/stargazer/>
 
 ```{r, message=FALSE}
 lm <- lm(prestige ~income + education, data=train)
@@ -336,7 +357,7 @@ lm2 <- lm(prestige ~income + education, data=test)
 
 ```{r, results='asis', message=FALSE}
 library(stargazer)
-stargazer(lm, lm2, title = "Table with Stargazer", style = "apsr",  omit.stat = c("rsq", "f","ser"), type = "html")
+stargazer(lm, lm2, title = "Table with Stargazer", style = "apsr",  omit.stat = c("rsq", "f","ser"))
 ```
 
 
