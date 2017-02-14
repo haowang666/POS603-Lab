@@ -1,0 +1,210 @@
+---
+title: 'Lab 5: Linear Regression Diagnostics'
+author: "Hao Wang"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# 1. Load data and essential packages
+```{r, message=FALSE}
+#install.packages(c('lmtest', 'car', 'faraway', 'MASS', 'ggplot2','grid','gridExtra'))
+library(lmtest)
+library(car)
+library(faraway)
+library(MASS)
+library(ggplot2)
+mydata <- Prestige
+names(mydata)
+set.seed(99) #set seed of random sample
+n <-nrow(mydata)
+n1 <- floor(n/1.5) #train
+n2 <- n -n1        #test
+
+train=sample(n, n1, replace = F) #create a random sample
+Train=data.frame(mydata[train,], row.names=NULL)#select data.frame of Train by row
+Test =data.frame(mydata[-train,], row.names =NULL  )#select data.drame of Test by row
+```
+
+# 2. Matrix Notation
+$$\hat{Y} = X\beta$$
+
+## Hat Matrix
+$$\hat{Y} = X\beta$$
+$$\hat{Y} = X(X'X)^{-1}X'Y$$
+$$\hat{Y} =  HY$$
+$$H = X(X'X)^{-1}X'$$
+H is the hat matrix, which turns $Y$ into $\hat{Y}$. Hat matrix measures high leveage points. 
+I is the identity matrix with all elements as 1. 
+
+- *H is symmetric: $H = H'$ and $(I - H)' = (I - H)$
+
+- *H is idempotent: $H^2 = H$ and $(I - H)(I - H) = (I - H)$
+
+## Residuals
+$$e = Y -\hat{Y} = Y - HY = (I-H)Y$$
+
+
+# 3. Check one-to-one bivariate relations
+```{r, message=FALSE}
+
+attach(Train)
+pairs(Train$prestige ~ Train$income + Train$education)
+```
+Looks like the variable income has a nonlinear relationship, let's transfrom this value in the log() form. Note: it is always a good habit to check the bivariate relationship before runnning regression. Sometimes you need to thank about the funtional form of your variable: should it be in log(), squared or other formats?
+
+
+## 3.a Variable transformation
+
+```{r, message=FALSE}
+Train$income.log = log(Train$income)
+pairs(Train$prestige ~ Train$income.log + Train$education)
+#regression model
+attach(Train)
+lm <- lm(prestige ~ income.log + education)
+```
+Looks much better!
+
+# 4. Model assumptions check
+
+## 4.a Constant Variance
+We can check through the residual VS fitted value plot
+```{r}
+plot(fitted(lm), residuals(lm),  xlab="Fitted", ylab="Residuals")
+abline(h=0, col="red") # draws a horizontal red line at y = 0
+```
+Alternatively, we can run a former test.
+```{r}
+# Evaluate homoscedasticity
+# non-constant error variance test
+ncvTest(lm)
+```
+
+## 4.b Residual autocorrelation
+In linear regression we require $\epsilon \stackrel{\text{i.i.d}}{\sim} (0, \sigma^2)$. This part check the iid assumption.
+
+Again we can look at the residual VS fitted value plot. A formal test (Durbin-Watson test) is included in lmtest package. 
+
+```{r}
+plot(fitted(lm), residuals(lm),  xlab="Fitted", ylab="Residuals")
+abline(h=0, col="red") # draws a horizontal red line at y = 0
+# Test for Autocorrelated Errors
+dwtest(lm)
+```
+
+
+## 4.c Residual normality
+Normality assumption requires the error distributed as normal. We can check this through normal QQ plot. 
+
+```{r}
+qqnorm(residuals(lm), ylab="Residuals") # Q-Q plot
+qqline(residuals(lm)) # line through Q1 and Q3
+```
+- Interpret QQ plot: To get an idea of the variation to be expected in a Q-Q plot, inspect the plots generated for a number of probability distributions. In the examples below, we use the standard normal,
+the lognormal, Student's t with one degree of freedom, and the uniform U(0; 1) distribution,
+respectively. Nine independent pseudo-random samples of size 50 are generated from each
+distribution. For each sample, a Q-Q plot with a quartile-line is produced.
+
+
+```{r}
+for(i in 1:100) x = rnorm(50); qqnorm(x); qqline(x)
+# i.e., standard normal distribution (symmetric)
+
+for(i in 1:100) x = rlnorm(50); qqnorm(x); qqline(x)
+# lognormal distribution (long right tail, skew to right)
+
+for(i in 1:100) x = rt(50,1); qqnorm(x); qqline(x)
+# Student t-distribution with one df (heavy tails, platykurtic)
+
+for(i in 1:100) x = runif(50); qqnorm(x); qqline(x)
+# uniform (0,1) distribution (short tails, leptokurtic)
+```
+
+## 4.d Non-linearity.
+Component residual plots, an extension of partial residual plots, are a good way to see if the predictors have a linear relationship to the dependent variable. A partial residual plot essentially attempts to model the residuals of one predictor against the dependent variable. A component residual plot adds a line indicating where the line of best fit lies. A significant difference between the residual line and the component line indicates that the predictor does not have a linear relationship with the dependent variable. 
+
+```{r}
+# Evaluate Nonlinearity
+# component + residual plot 
+crPlots(lm)
+# Ceres plots 
+ceresPlots(lm)
+```
+
+## 4.e Multicolinearility
+We can use Variance Inflation Factor to detect potential multicollinearity problem. Generally speaking a VIF value larger than 4 is problematic. 
+
+```{r}
+a <- (vif(lm) >4)
+cat('Multicolinearity is ', a, '\n')
+```
+
+
+# 5. Influenatial Points
+Linear regression is very sensitive to high leverage points. We need to be careful whether to delelte them or weight them. 
+
+
+## 5.a High leverage points
+The leverage points are determined by the hat matrix H. Generally speaking the critical value is defined by 2p/N. p is the number of variables, and N is the number of observations.
+
+```{r}
+hat <- influence(lm)$hat
+cutoff <- 2*(length(lm$coefficients)-1)/length(Train) #cutoff points
+cutoff
+which( hat>cutoff)
+```
+In our case there is no high leverage points.
+
+## 5.b Outliers
+```{r}
+# Assessing Outliers
+outlierTest(lm) # Bonferonni p-value for most extreme obs
+qqPlot(lm, main="QQ Plot") #qq plot for studentized resid 
+leveragePlots(lm) # leverage plots
+```
+
+## 5.c Influentical Points
+Cook's distance measure is a combination of a residual effect and leverage, as shown by
+Equation 19 in Boomsma (2010). This combination leads to influence.
+
+### Influential Plots
+```{r}
+# Influential Observations
+# added variable plots 
+avPlots(lm)
+# Cook's D plot
+# identify D values > 4/(n-k-1) 
+cutoff <- 4/((nrow(Train)-length(lm$coefficients)-2)) 
+cutoff
+
+
+plot(lm, which=4, cook.levels=cutoff)
+# Influence Plot 
+influencePlot(lm,	id.method="identify", main="Influence Plot", sub="Circle size is proportial to Cook's Distance" )
+```
+### Cook's Distance
+We can also plot leverage points against Cook's distance.
+```{r}
+# Cook's Distance
+cook <- cooks.distance(lm)
+a <- which.max(cook)
+cat('The obs which maxes cooks D is', a, '\n')
+plot(lm, which=6) # leverage against Cook's distance
+```
+
+### Check regression while deleting the max cook obs.
+
+```{r}
+summary(lm)
+Train.sub <- subset(Train, cook<max(cook))
+lm2 <- lm(prestige ~ income.log + education, data=Train.sub)
+summary(lm2) # linear model estimates without Liby
+```
+
+
