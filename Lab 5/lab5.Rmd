@@ -70,12 +70,13 @@ pairs(Train$prestige ~ Train$income.log + Train$education)
 #regression model
 attach(Train)
 lm <- lm(prestige ~ income.log + education)
+summary(lm)
 ```
 Looks much better!
 
 # 4. Model assumptions check
 
-## 4.a Constant Variance
+## 4.a Constant Variance (homoskedasticity)
 We can check through the residual VS fitted value plot
 ```{r}
 plot(fitted(lm), residuals(lm),  xlab="Fitted", ylab="Residuals")
@@ -88,7 +89,7 @@ Alternatively, we can run a former test.
 ncvTest(lm)
 ```
 
-## 4.b Residual autocorrelation
+## 4.b Residual autocorrelation (strict exogenity)
 In linear regression we require $\epsilon \stackrel{\text{i.i.d}}{\sim} N(0, \sigma^2)$. This part check the iid assumption.
 
 Again we can look at the residual VS fitted value plot. A formal test (Durbin-Watson test) is included in lmtest package. 
@@ -140,7 +141,7 @@ crPlots(lm)
 ceresPlots(lm)
 ```
 
-## 4.e Multicolinearility
+## 4.e Multicolinearility (full rank)
 We can use Variance Inflation Factor to detect potential multicollinearity problem. Generally speaking a VIF value larger than 4 is problematic. 
 
 ```{r}
