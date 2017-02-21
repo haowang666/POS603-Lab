@@ -49,6 +49,8 @@ I is the identity matrix with all elements as 1.
 
 ## Residuals
 $$e = Y -\hat{Y} = Y - HY = (I-H)Y$$
+and
+$$e \stackrel{\text{i.i.d}}{\sim} N(0, \sigma^2)$$
 
 
 # 3. Check one-to-one bivariate relations
@@ -87,7 +89,7 @@ ncvTest(lm)
 ```
 
 ## 4.b Residual autocorrelation
-In linear regression we require $\epsilon \stackrel{\text{i.i.d}}{\sim} (0, \sigma^2)$. This part check the iid assumption.
+In linear regression we require $\epsilon \stackrel{\text{i.i.d}}{\sim} N(0, \sigma^2)$. This part check the iid assumption.
 
 Again we can look at the residual VS fitted value plot. A formal test (Durbin-Watson test) is included in lmtest package. 
 
@@ -103,6 +105,7 @@ dwtest(lm)
 Normality assumption requires the error distributed as normal. We can check this through normal QQ plot. 
 
 ```{r}
+shapiro.test(lm$resid)
 qqnorm(residuals(lm), ylab="Residuals") # Q-Q plot
 qqline(residuals(lm)) # line through Q1 and Q3
 ```
@@ -174,6 +177,7 @@ Cook's distance measure is a combination of a residual effect and leverage, as s
 Equation 19 in Boomsma (2010). This combination leads to influence.
 
 ### Influential Plots
+
 ```{r}
 # Influential Observations
 # added variable plots 
@@ -188,7 +192,9 @@ plot(lm, which=4, cook.levels=cutoff)
 # Influence Plot 
 influencePlot(lm,	id.method="identify", main="Influence Plot", sub="Circle size is proportial to Cook's Distance" )
 ```
+
 ### Cook's Distance
+
 We can also plot leverage points against Cook's distance.
 ```{r}
 # Cook's Distance
@@ -206,5 +212,7 @@ Train.sub <- subset(Train, cook<max(cook))
 lm2 <- lm(prestige ~ income.log + education, data=Train.sub)
 summary(lm2) # linear model estimates without Liby
 ```
+
+
 
 
