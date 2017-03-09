@@ -1,0 +1,289 @@
+---
+title: 'Lab 5: Generalized Linear Regression'
+author: "Hao Wang"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# 1. Load essential packages
+```{r, message=FALSE}
+library(VGAM)
+library(car)
+library(MASS)
+library(effects)
+library(nnet) #neural net package, which contains multinomial function
+library(ggplot2)
+library(Zelig)
+library(ZeligChoice)
+```
+
+# 2. Binary Dependent Variable
+When our dependent variable is binary, OLS is not applicable due to the violation of the residual variance. Generally we have two different models: probit and logit. They share the same idea: coerce the predicted y values into a continuous distribution ranging from 0 to 1. 
+
+
+## 2.1 Logistic Regression
+The basic idea of logistic regression is to make a logistic transformation of our linear function.
+
+### 2.1.a Logistic Function
+The logistic function is 
+$$\sigma(y) = \frac{1}{1+ e^{-y}}$$
+and 
+$$y = XB = \beta_0 + \beta_1*x_1 + \beta_2*x_2 ...$$
+Apply logistic function to the linear combination y, we got the prediction (known as the `predicted probability' of the logistic regression)
+$$Y = \sigma(y) = F(x) = \frac{1}{1 + e^{-(\beta_0 + \beta_1*x_1 + \beta_2*x_2 ...)}}$$
+With the logistic transformation, the outcome has a range of (0,1), we can simulate its outcome.
+
+```{r}
+x <- seq(-10, 10, by =0.1)
+prob <- 1/(1+ exp(-x))
+plot(x, prob, type = "b", main = "Logistic Function")
+```
+
+### 2.1.b Logistic Regression R Codes
+Use gender as an example, we can interpret the regression result with odds ratio.
+Odds ratio: the ratio of the probability the event occurs to the probability it does not occur
+$$odds = \frac{p}{1-p}$$
+In this example the odds ratio percentage change is -21%, which means on average the odds of being a volunteer will diminish by 21% if the subject is male. 
+
+We can also get the predicted probability by the predict fucntion. 
+
+
+
+
+
+```{r, message=FALSE}
+#Load Cowles data from the effects package
+#Explanation 
+help(Cowles)
+mydata <- Cowles
+summary(mydata)
+logit <- glm(formula = volunteer ~ neuroticism + sex + extraversion,
+             data = mydata, family = binomial(link = "logit"))
+summary(logit)
+
+#get odds ratio
+100*(exp(logit$coefficients[-1])-1)
+
+#prediction of a certain point 
+new <- data.frame(sex = "male", extraversion = 10, neuroticism =10)
+predict(logit, newdata = new, type = 'response')
+
+#we can also calculate the AIC by hand
+#the formula is deviance + 2*(p+1), while p is the number of variables
+aic <- logit$deviance+ 2*(4)
+aic
+```
+
+
+- Lab Practice 1: based on the logistic funtion, can you get the predicted outcome with the coefficients given by the summary table?
+
+```{r}
+#we can compute the prediction by hand
+y <- logit$coefficients[1]+ logit$coefficients[2]*10 + logit$coefficients[3]*1 + logit$coefficients[4]*10
+#Then apply it to the logistic function 
+#logistic funtion is???
+
+```
+
+
+### 2.1.c Compare the results between logit and regular lm
+
+```{r}
+yhat.log <- predict(logit, data=mydata, type = 'response')
+lm <- lm(as.numeric(volunteer) ~ neuroticism + sex + extraversion, data = mydata)
+yhat.lm <- predict(lm, data=mydata)
+mydata$yhat.log <- yhat.log
+mydata$yhat.lm  <- yhat.lm
+ggplot(data = mydata, aes(factor(volunteer), yhat.log)) +
+      geom_boxplot() +
+      ggtitle("Logit Model") +
+      geom_jitter(alpha = .5) +
+      theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(data = mydata, aes(factor(volunteer), yhat.lm)) +
+      geom_boxplot() +
+      geom_jitter(alpha = .5) +
+      ggtitle("lm Prediction (Pay attention to the range)") +
+      theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+
+
+
+
+
+## 2.2 Probit Model
+Probit model share the similar idea with logit model, but in the probit case we are doing a gaussian transformation (the CDF funtion of a standard normal distribution). 
+
+### 2.2.a Probit Function
+It's simply the CDF funtion of a standard normal distribution
+
+$$\Phi(y) = \frac{1}{\sqrt{2\pi}}\int_{-\infty}^{y}e^{-t^2/2}dt$$
+And y is the linear combination 
+$$y = XB = \beta_0 + \beta_1*x_1 + \beta_2*x_2 ...$$
+
+```{r}
+probit <- glm(formula = volunteer ~ neuroticism + sex + extraversion, 
+              data = mydata, family = binomial(link = "probit"))
+summary(probit)
+
+#prediction of a certain point 
+new <- data.frame(sex = "male", extraversion = 10, neuroticism =10)
+predict(probit, newdata = new, type = 'response')
+```
+
+- Lab Practice 2: pick another observation (you need to set values for sex, extraversion and neuroticism), compare the results of logit model and probit model.
+
+
+
+# 3. Ordered Model
+When our DV is an ordered/ranked outcome, such as 'bad', 'ok', 'good'; or 'unlikely', 'somewhat likely', 'very likely', we need to use ordered model.
+
+```{r}
+mydata <- WVS
+summary(mydata)
+help(WVS)
+#convert our DV to an ordered factor
+mydata$poverty <- ordered(as.factor(mydata$poverty))
+#change reference level to USA
+mydata$country <- relevel(mydata$country, ref="USA")
+#overview
+table(mydata$poverty, mydata$country)
+```
+
+## 3.1 Ordered Logit
+```{r}
+# the function y~. means regressing y on the rest variables
+ologit <- polr(poverty ~., method = 'logistic', data = mydata)
+summary(ologit)
+```
+
+
+### 3.1.b Ologit Interpretation 
+(Also see PA book p.114) Standard interpretation of the ordered logit coefficient is that for a one unit increase in the predictor, the response variable level is expected to change by its respective regression coefficient in the ordered log-odds scale while the other variables in the model are held constant. For instance, the religious `YES' will increase the response variable level by am ordered log-odds scale of 0.179. 
+
+We can also interpret it in terms of odds ratio. One unit increase of age, the odds that they will report `too little work' relative to any higher categories will increase by 1.12. 
+
+```{r}
+100*(exp((ologit$coefficients))  -1)
+```
+
+Prediction can be done in a similar way with logit model.
+```{r}
+new <- data.frame(country = "Norway", religion = "no", age =50, degree="no", gender="female")
+predict(ologit, newdata = new, type = "prob")
+```
+
+
+
+
+
+# 4. Introduction of Zelig Project.
+Website: [click here](http://docs.zeligproject.org/en/latest/vignette.html)
+Zelig allows a unified grammar in estimating generalized linear models, besides it provides an easy way of simulating probability distributions.
+
+## 4.1 Logit Model
+
+
+```{r, message=FALSE}
+mydata <- Cowles
+zlogit <- zelig(volunteer ~neuroticism + sex + extraversion, model ="logit", data=mydata)
+summary(zlogit)
+```
+
+We can simulate the results by sim() and setx(). (Stata package clarify uses the same command, if you're familar with Stata)
+
+```{r,warning=FALSE}
+x.zlogit <- setx(zlogit, sex="female", neuroticism = 10, extraversion =10)
+zlogit.out <- sim(zlogit, x=x.zlogit)
+summary(zlogit.out)
+plot(zlogit.out)
+```
+
+Use the similar logit we can calculate the differences at lower level Xs and higher level Xs.
+
+```{r, warning=FALSE}
+#when not specified, other variables are held at mean level
+x.high <- setx(zlogit, neuroticism = quantile(mydata$neuroticism, prob = 0.75), sex="male")
+x.low <- setx(zlogit, neuroticism = quantile(mydata$neuroticism, prob = 0.25), sex="male")
+s.out2 <- sim(zlogit, x = x.high, x1 = x.low)
+summary(s.out2)
+#plot(s.out2)
+```
+
+
+
+## 4.2 Ordered Logit Model
+```{r}
+#Load Data and make sure our DV is in ordered
+mydata <- WVS
+mydata$poverty <- factor(mydata$poverty, ordered = TRUE, levels = c("Too Little", "About Right", "Too Much"))
+summary(mydata$poverty)
+#change reference level to USA
+mydata$country <- relevel(mydata$country, ref="USA")
+
+
+
+```
+
+Apply the Zelig Function
+
+```{r}
+z.ologit <- zelig(poverty ~ country + religion + age + degree, data=mydata, model="ologit")
+summary(z.ologit)
+```
+
+Set the explanatory variables to their observed values and simulate fitted values given x.out and view the results:
+
+```{r}
+x.out <- setx(z.ologit)
+s.out <- sim(z.ologit, x = x.out)
+summary(s.out)
+plot(s.out)
+```
+
+
+## 4.3 Multinomial Logit Model
+Multinomial logit model should be applied when our DV contains multiple nominal categories
+
+We load the British Election Panel Study, in which the DV is the vote choice (Conservative, Labour and Liberal Democrat)
+
+```{r}
+#Load British Election Panel Study
+mydata <- BEPS
+summary(mydata$vote)
+```
+
+Apply zelig function of mlogit. 
+
+In the default model, the reference cotegory is the last level and will be omitted. You can change the reference level in the way I did for ountries in the previous sections. Essentially in multinomial model our software is estimating k-1 models, while k is the number of the categories of the DV. Therefore, since the parameter estimates are relative to the referent group, the standard interpretation of the multinomial logit is that for a unit change in the predictor variable, the logit of outcome m relative to the referent group is expected to change by its respective parameter estimate (which is in log-odds units) given the variables in the model are held constant. 
+
+```{r}
+z.out <-  zelig(vote ~ age + economic.cond.national + economic.cond.household + gender + political.knowledge, data=mydata, model="mlogit")
+summary(z.out)
+```
+
+We can also simulte the results in a similar way
+
+```{r}
+x.weak <- setx(z.out, economic.cond.national = 1, economic.cond.household = 1, age =45,
+               gender ="male", political.knowledge = 2)
+x.strong <- setx(z.out, economic.cond.national = 4, economic.cond.household = 4, age =45,
+                 gender="male", political.knowledge = 2)
+s.out.mlogit <- sim(z.out, x = x.strong, x1 = x.weak)
+summary(s.out.mlogit)
+plot(s.out)
+```
+
+
+
+
