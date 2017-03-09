@@ -1,5 +1,5 @@
 ---
-title: 'Lab 5: Generalized Linear Regression'
+title: 'Lab 6: Generalized Linear Regression'
 author: "Hao Wang"
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output:
