@@ -1,0 +1,254 @@
+---
+title: 'Lab 6: Interations'
+author: "Hao Wang"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# 1. Load essential packages
+```{r, message=FALSE}
+library(VGAM)
+library(MASS)
+library(effects)
+library(ggplot2)
+library(Zelig)
+library(ZeligChoice)
+library(car)
+library(interflex)
+```
+
+
+More to read: 
+
+1. Hainmueller et al. 2017: How Much Should We Trust Estimates from Multiplicative Interaction Models 
+[**click here**](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2739221)
+
+2. Matt Golder's Webpage 
+[**click here**](http://mattgolder.com/interactions)
+
+
+# 2. Interaction in a glance
+Linear interaction term has the the following general function: 
+$$Y = f(X,D,Z) = \mu + \eta X + \alpha D + \beta(D*X)+ \gamma Z + \epsilon$$
+In this model Y is the dependent variable, D is the main independent variable (or the 'treatment' in the experimental settings). X is the moderator, and the D*X is the interaction term between D and X. Z is a list of other control variables, $\mu$ is the intercept and $\epsilon$ is the error term.
+
+In this model the interaction term implies a linear interaction effect (LIE), which means the *marginal effect* of treatment D on the dependent variable Y is 
+$$MAR_D = \frac{\partial Y}{\partial D} =  \alpha + \beta X$$
+$MAR_D$ stands for the marginal effect of D. This implies that the effect of D on Y has a linear relation with the moderator X. Because it is linear, the relative treatment effect of $D = d_1$ and $D = d_2$ can be expressed as 
+$$Eff(d_1, d_2) = Y(D=d_1|X, Z) - Y(D=d_2|X, Z)$$
+$$ = (\mu + \alpha d_1+ \eta X + \beta d_1 X) - (\mu + \alpha d_2+ \eta X + \beta d_2 X)$$
+$$ = \alpha (d_1 - d_2) + \beta(d_1 -  d_2)X$$
+We can see the effects of D on Y is a linear funtion on X. This is a strong assumption and will often be violated. 
+
+
+# 3. Interpretation and Plot Marginal Effects
+Following Brambor, Clark and Golder (2006), we should always include the treatment and moderator terms when we have an interaction. To interpret the effects with interactions, it is better to calculate the marginal probabilities. 
+
+In the following example we play with simulated data.
+
+```{r}
+set.seed(61)#Barcelona beat Paris SG!
+#set number of obs
+n <- 1000
+d <-rnorm(n,0,1) # continuous treatment
+x <-rnorm(n,3,1) # moderator
+z <-rnorm(n,3,1) # covariate
+e <-rnorm(n,0,3) # error term, normal distribution, mean 0, sd 5
+#Let's build our Y
+Y  <- 10 - 2 * x - 3 * d + 2 * x * d + 1 * z + e
+df <- cbind.data.frame(Y=Y, D=d, X=x, Z=z)
+```
+
+Now we can estimate our model with interaction
+
+```{r}
+int <- lm(Y ~ D*X + Z, data=df)
+summary(int)
+```
+
+The marginal effect of treatment D is -2.86 + 1.97X. To get the standard error, we need to take a square root of $Var(\beta_D + \beta_{DX}X)$
+
+expand this function
+$$Var(\beta_D + \beta_{DX}X)$$
+$$= Var(\beta_D) + 2Cov(\beta_D, \beta_{DX})*X + Var(\beta_{DX})*Var(X)$$
+And X can be regarded as a given value (as we're calculating the marginal effect of D with the value of X given), thus
+
+$$= Var(\beta_D) + 2Cov(\beta_D, \beta_{DX})*X + Var(\beta_{DX})*X^2$$
+
+
+We can get the variance covariance matrix by vcov()
+```{r, message=FALSE}
+int <- lm(Y ~ D*X + Z, data=df)
+attach(df)
+vcov(int)
+```
+
+And we can now calcutale the standard error of marginal effects given by the previous equation.
+
+```{r}
+var <- vcov(int)[2,2] + 2*vcov(int)[2,5]*X + vcov(int)[5,5]*X^2 
+se  <- sqrt(var)
+df$mar <- int$coefficients[2] + int$coefficients[5]*X
+#calculate the 95% CI of the marginal effect
+df$up <- df$mar + 1.96*se
+df$low <- df$mar - 1.96*se
+```
+
+Don't forget to plot it in ggplot2!
+
+```{r}
+#graphic presentation
+ggplot(data=df, aes(x = X))+ 
+  geom_line(aes(y =mar)) + 
+  geom_line(aes(y =up), linetype="dashed", color="blue") + 
+  geom_line(aes(y =low), linetype="dashed", color="blue") + 
+  geom_line(aes(y =0), color ="red", linetype="dashed") +
+  xlab("Level of X (moderator) (95% CI)") + 
+  ylab("Marginal Effects") + 
+  ggtitle("Marginal Effect of D at Different Levels of X")+ 
+  geom_rug(sides="b")
+```
+
+
+
+
+
+# 4. Diagnostics
+Hainmueller et al. (2017) suggest several ways to check the interaction models. 
+
+1. The first is to check if there are enough points at the differnet levels of moderators (avoid extrapolation)
+
+2. The second is to check if the linear interactive relation holds
+
+
+When the treatment is binary (0 and 1, receive or not), we can simply plot the relation between Y and X at D =0 and D =1. 
+
+
+## 4.1 Raw Plots
+Let's first create a binary treatment model.
+
+```{r}
+set.seed(1)
+n<-200
+d1<-sample(c(0,1),n,replace=TRUE) # dichotomous treatment
+x<-rnorm(n,3,1) # moderator
+z<-rnorm(n,3,1) # covariate
+e<-rnorm(n,0,1) # error term
+y1<-5 - 4 * x - 9 * d1 + 3 * x * d1 + 1 * z + 2 * e
+s1<-cbind.data.frame(Y = y1, D = d1, X = x, Z1 = z)
+```
+
+
+We can use the written function in the *interflex* package to check the binary treatment case. In the graph, the red line is the LOESS fit and the blue line is the linear fit. To check the linear effect assumptiom, we need to check if the LOESS fit overlaps with the linear fit. 
+
+
+```{r}
+#You can specify your moderator at X option and your treatment at the D option.
+inter.raw(Y = "Y", D = "D", X = "X", data = s1, 
+          weights = NULL, Ylabel = "Outcome", Dlabel = "Treatment", Xlabel="Moderator")
+```
+
+
+When the treatment is continuous, we can apply the similar idea: plot the data at different levels of moderator X. Package *interflex* has a built-in function for continuous treatment, in which it plots data at first tercile (low), second tercile (medium) and thrid tercile (high).
+
+
+Let's create a continuous treatment model
+
+
+```{r}
+set.seed(1)
+n<-200
+d2<-rnorm(n,3,1) # continuous treatment
+x<-rnorm(n,3,1) # moderator
+z<-rnorm(n,3,1) # covariate
+e<-rnorm(n,0,1) # error term
+y2<-5 - 4 * x - 9 * d2 + 3 * x * d2 + 1 * z + 2 * e
+s2<-cbind.data.frame(Y = y2, D = d2, X = x, Z1 = z)
+```
+
+```{r}
+inter.raw(Y = "Y", D = "D", X = "X", data = s2, Ylabel = "Outcome", Dlabel = "Treatment", Xlabel="Moderator")
+```
+
+
+
+Sometimes our interaction term can be nonlinear. The following example is a quadratic interaction with binary treatment
+```{r}
+set.seed(1)
+n<-200
+d1<-sample(c(0,1),n,replace=TRUE) # dichotomous treatment
+z<-rnorm(n,3,1) # covariate
+e<-rnorm(n,0,1) # error term
+x3 <- runif(n, -3,3) # uniformly distributed moderator
+#quadratic interaction
+y3 <- d1*(x3^2-2.5) + (1-d1)*(-1*x3^2+2.5) + 1 * z + 2 * e
+s3 <- cbind.data.frame(D=d1, X=x3, Y=y3, Z1 = z)
+```
+
+The diagnostic function is the same. In this case, we found the LOESS fit and linear fit differ a lot, which indicating using a quadratic function.
+
+```{r}
+inter.raw(Y = "Y", D = "D", X = "X", data = s3, Ylabel = "Outcome", Dlabel = "Treatment", Xlabel="Moderator")
+```
+
+## 4.2 Binning Plots
+*Interflex* also provides binning plot diagnostics. The nbins option sets the number of bins. The default number of bins is 3, and equal-sized bins are created based on the distribution of the moderator. The red vertical lines are the CI of the maginal effect at the evaluation point of each bin (default option is the median value).
+
+There are four options for the choice of the variance estimator: vartype=“homoscedastic”, “robust”, “cluster”, and “pcse”. The default option is “homoscedastic”.
+
+In the first case
+```{r}
+inter.binning(Y = "Y", D = "D", X = "X", Z = "Z1", data = s1, vartype = "robust")
+```
+ In the second continuous case
+ 
+```{r}
+inter.binning(Y = "Y", D = "D", X = "X", Z = "Z1", data = s2, Xdistr = "density")
+```
+
+And the nonlinear case
+
+```{r}
+inter.binning(Y = "Y", D = "D", X = "X", Z = "Z1", data = s3)
+```
+
+
+
+# 5. Actual example: Slavic Share Voting
+Let's replicate the Slavic share voting example shown in [Matt Golder's webpage](http://mattgolder.com/interactions), because it looks terrible.
+
+
+```{r}
+library(foreign)
+mydata <- read.dta('https://github.com/haowang666/POS603-Lab/blob/master/Lab%207/alexseev.dta?raw=true')
+lm <- lm(xenovote ~ slavicshare*changenonslav+
+        inc9903 + eduhi02 + unemp02 + apt9200 +vsall03 +brdcont, data=mydata)
+inter.raw(Y = "xenovote", D = "slavicshare", 
+          X = "changenonslav", data = mydata, 
+          Ylabel = "Marginal Effect of Slavic Share", 
+          Dlabel = "Treatment (Slavic Share)", 
+          Xlabel="Moderator (change of non-Slavic share)")
+```
+
+The raw plot shows that the liner fitting is very poor at medium and high moderator level.
+
+
+```{r}
+inter.binning(Y = "xenovote", D = "slavicshare", 
+          X = "changenonslav", 
+          Z = c("inc9903", "eduhi02", "unemp02","apt9200",
+                "vsall03", "brdcont"), 
+          data = mydata, 
+          Xlabel="Change of non-Slavic share", na.rm = TRUE)
+```
+
+Can't be worse!
+
+
