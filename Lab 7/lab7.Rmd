@@ -113,7 +113,8 @@ ggplot(data=df, aes(x = X))+
   xlab("Level of X (moderator) (95% CI)") + 
   ylab("Marginal Effects") + 
   ggtitle("Marginal Effect of D at Different Levels of X")+ 
-  geom_rug(sides="b")
+  geom_rug(sides="b")+
+  geom_ribbon(aes(ymin=up, ymax=low), alpha=0.2)
 ```
 
 
