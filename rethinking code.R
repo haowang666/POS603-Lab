@@ -1,5 +1,9 @@
-#Try codes
-
+#Install
+install.packages(c('rstan','devtools','coda','mvtnorm','loo'))
+library(devtools)
+install_github("rmcelreath/rethinking")
+library(rethinking)
+#----------------------------------------------------------------
 
 
 ## R code 0.1
@@ -573,6 +577,7 @@ d <- Howell1
 str(d)
 
 ## R code 4.65
+# This section standardize variables
 d$weight.s <- ( d$weight - mean(d$weight) )/sd(d$weight)
 
 ## R code 4.66
@@ -580,7 +585,7 @@ d$weight.s2 <- d$weight.s^2
 m4.5 <- map(
   alist(
     height ~ dnorm( mu , sigma ) ,
-    mu <- a + b1*weight.s + b2*weight.s2 ,
+    mu <- a + b1*weight.s + b2*weight.s2 , #this is what we knew as the regression function
     a ~ dnorm( 178 , 100 ) ,
     b1 ~ dnorm( 0 , 10 ) ,
     b2 ~ dnorm( 0 , 10 ) ,
@@ -592,11 +597,11 @@ m4.5 <- map(
 precis( m4.5 )
 
 ## R code 4.68
-weight.seq <- seq( from=-2.2 , to=2 , length.out=30 )
+weight.seq <- seq( from=-2.2 , to=2 , length.out=30 ) # simulation
 pred_dat <- list( weight.s=weight.seq , weight.s2=weight.seq^2 )
 mu <- link( m4.5 , data=pred_dat )
 mu.mean <- apply( mu , 2 , mean )
-mu.PI <- apply( mu , 2 , PI , prob=0.89 )
+mu.PI <- apply( mu , 2 , PI , prob=0.89 ) #PI is the prediction interval function
 sim.height <- sim( m4.5 , data=pred_dat )
 height.PI <- apply( sim.height , 2 , PI , prob=0.89 )
 
@@ -689,6 +694,17 @@ precis( m5.3 )
 
 ## R code 5.5
 plot( precis(m5.3) )
+# This code is useful, try plotting coefficients plot
+library(effects)
+mydata <- Prestige
+names(Prestige)
+lm <- lm(prestige ~ education + income, data = mydata, conf)
+summary(lm)
+a<- confint(lm)
+x <- as.matrix(lm$coefficients, ncol=1)
+a <- data.frame(a, x)
+
+
 
 ## R code 5.6
 m5.4 <- map(
