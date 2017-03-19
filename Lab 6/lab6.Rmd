@@ -225,7 +225,7 @@ summary(s.out2)
 We can plot the marginal effect by setx to a sequence of values
 
 
-```{r}
+```{r, warning=FALSE}
 #easy way
 #simulation first
 #the default output of zelig is 1000 simulation at each list of x
@@ -236,7 +236,7 @@ plot(s.out3)
 
 
 
-```{r}
+```{r, warning=FALSE}
 #`hard' way
 set.seed(1)
 z.out <- zelig(volunteer ~neuroticism + sex + extraversion, model ="logit", data=mydata, cite = FALSE)
