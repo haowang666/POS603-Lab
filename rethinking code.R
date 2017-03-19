@@ -703,6 +703,7 @@ summary(lm)
 a<- confint(lm)
 x <- as.matrix(lm$coefficients, ncol=1)
 a <- data.frame(a, x)
+#unsolved.
 
 
 
