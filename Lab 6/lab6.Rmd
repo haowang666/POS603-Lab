@@ -18,7 +18,6 @@ library(VGAM)
 library(car)
 library(MASS)
 library(effects)
-library(nnet) #neural net package, which contains multinomial function
 library(ggplot2)
 library(Zelig)
 library(ZeligChoice)
@@ -33,11 +32,11 @@ The basic idea of logistic regression is to make a logistic transformation of ou
 
 ### 2.1.a Logistic Function
 The logistic function is 
-$$\sigma(y) = \frac{1}{1+ e^{-y}}$$
+$$L(y) = \frac{1}{1+ e^{-y}}$$
 and 
-$$y = XB = \beta_0 + \beta_1*x_1 + \beta_2*x_2 ...$$
+$$y = f(x) =  XB = \beta_0 + \beta_1*x_1 + \beta_2*x_2 ...$$
 Apply logistic function to the linear combination y, we got the prediction (known as the `predicted probability' of the logistic regression)
-$$Y = \sigma(y) = F(x) = \frac{1}{1 + e^{-(\beta_0 + \beta_1*x_1 + \beta_2*x_2 ...)}}$$
+$$Y = L(y) = L(f(x)) = \frac{1}{1 + e^{-(\beta_0 + \beta_1*x_1 + \beta_2*x_2 ...)}}$$
 With the logistic transformation, the outcome has a range of (0,1), we can simulate its outcome.
 
 ```{r}
@@ -112,6 +111,8 @@ ggplot(data = mydata, aes(factor(volunteer), yhat.lm)) +
       geom_jitter(alpha = .5) +
       ggtitle("lm Prediction (Pay attention to the range)") +
       theme(plot.title = element_text(hjust = 0.5))
+
+
 ```
 
 
@@ -194,7 +195,7 @@ Zelig allows a unified grammar in estimating generalized linear models, besides 
 ## 4.1 Logit Model
 
 
-```{r, message=FALSE}
+```{r, message=FALSE, cathe=FALSE}
 mydata <- Cowles
 zlogit <- zelig(volunteer ~neuroticism + sex + extraversion, model ="logit", data=mydata)
 summary(zlogit)
@@ -221,6 +222,59 @@ summary(s.out2)
 ```
 
 
+We can plot the marginal effect by setx to a sequence of values
+
+
+```{r}
+#easy way
+#simulation first
+#the default output of zelig is 1000 simulation at each list of x
+x.sim <- setx(zlogit, neuroticism = seq(from = 0, to = 24, by = 1))
+s.out3 <- sim(zlogit, x = x.sim)
+plot(s.out3)
+```
+
+
+
+```{r}
+#`hard' way
+set.seed(1)
+z.out <- zelig(volunteer ~neuroticism + sex + extraversion, model ="logit", data=mydata, cite = FALSE)
+neuro.range <- seq(from = 0, to = 24, by = 1)
+x <- setx(z.out, neuroticism = neuro.range)
+s.out <- sim(z.out, x = x)
+
+#extract ev
+myev <- s.out$get_qi(qi='ev', xvalue = 'range')
+#convert the list into matrix
+myev2 <- as.data.frame(matrix(unlist(myev), nrow =1000))
+#create plot data
+a<- apply(myev2, 2, quantile, probs = c(0.025,0.975, 0.25, 0.75)) 
+low <- a[1,]
+high <- a[2,]
+qt.1 <- a[3,]
+qt.3 <- a[4,]
+mean <- apply(myev2, 2, mean) 
+
+plotdata <- as.data.frame(cbind(low, high, mean, qt.1, qt.3))
+plotdata$neuroticism <- seq(from = 0, to = 24, by =1)
+
+
+#plot in ggplot2
+ggplot(data=plotdata, aes(x = neuroticism))+ 
+  geom_line(aes(y =mean)) + 
+  geom_line(aes(y =high), linetype="dashed", color="blue") + 
+  geom_line(aes(y =low), linetype="dashed", color="blue") + 
+  geom_line(aes(y =qt.1), linetype="dashed", color="blue") + 
+  geom_line(aes(y =qt.3), linetype="dashed", color="blue") + 
+  xlab("Level of Neuroticism (95% CI)") + 
+  ylab("Expected Values E(Y|X)") + 
+  ggtitle("Marginal Effect of Neuroticism")+ 
+  geom_ribbon(aes(ymin=low, ymax=high), alpha=0.1)+
+  geom_ribbon(aes(ymin=qt.1, ymax=qt.3), alpha=0.6)
+```
+
+
 
 ## 4.2 Ordered Logit Model
 ```{r}
@@ -230,15 +284,12 @@ mydata$poverty <- factor(mydata$poverty, ordered = TRUE, levels = c("Too Little"
 summary(mydata$poverty)
 #change reference level to USA
 mydata$country <- relevel(mydata$country, ref="USA")
-
-
-
 ```
 
 Apply the Zelig Function
 
 ```{r}
-z.ologit <- zelig(poverty ~ country + religion + age + degree, data=mydata, model="ologit")
+z.ologit <- zelig(poverty ~ country + religion + age + degree, data=mydata, model="ologit", cite = FALSE)
 summary(z.ologit)
 ```
 
