@@ -35,13 +35,13 @@ zlogit <- zelig(voted ~severity*age + polinfrel + income + efficacy + partyID +
 summary(zlogit)
 ```
 
-# Run simulation
+## Check Ranges
 ```{r}
 #check range
 summary(play$development)
 ```
 
-# Create data and run simulation
+## Create data and run simulation
 ```{r}
 #41 Xs
 x.sim <- setx(zlogit, development = seq(from = -2, to = 2, by = 0.1))
@@ -54,7 +54,7 @@ ci.plot(s.out, qi ="ev")
 ```
 
 
-# Or use vanilla GLM code
+# 3. Or use vanilla GLM code
 ```{r, message=FALSE, warning=FALSE}
 glm <-  glm(formula = voted ~severity*age + polinfrel + income 
                   + efficacy + partyID +
@@ -84,7 +84,7 @@ detach(play)
 ```
 
 
-# Plot it
+## Plot it
 ```{r}
 plotdata <- as.data.frame(pr$fit)
 colnames(plotdata)<-c("fit")
