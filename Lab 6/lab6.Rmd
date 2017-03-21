@@ -231,6 +231,7 @@ We can plot the marginal effect by setx to a sequence of values
 #the default output of zelig is 1000 simulation at each list of x
 x.sim <- setx(zlogit, neuroticism = seq(from = 0, to = 24, by = 1))
 s.out3 <- sim(zlogit, x = x.sim)
+#expected value plot
 plot(s.out3)
 ```
 

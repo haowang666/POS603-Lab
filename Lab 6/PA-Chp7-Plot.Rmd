@@ -1,0 +1,24 @@
+---
+title: 'Lab 6: Generalized Linear Regression'
+author: "Hao Wang"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# 1. Load essential packages
+```{r, message=FALSE}
+library(VGAM)
+library(car)
+library(MASS)
+library(effects)
+library(ggplot2)
+library(Zelig)
+library(ZeligChoice)
+```
