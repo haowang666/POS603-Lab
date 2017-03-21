@@ -53,6 +53,42 @@ s.out <- sim(zlogit, x = x.sim)
 ci.plot(s.out, qi ="ev")
 ```
 
+## If you are unhappy with the default plot...
+
+We need to extract info from zelig simulation
+```{r}
+## Ranges of values
+development = seq(from = -2, to = 2, by = 0.1)
+
+# Extract expected values from simulations
+# ev is expected values
+phat<- s.out$get_qi(qi='ev', xvalue = 'range')
+# collapse list to dataframe
+phat <- as.data.frame(matrix(unlist(phat), nrow =1000))
+# apply function to column
+a<- apply(phat, 2, quantile, probs = c(0.025, 0.975, 0.25, 0.75)) 
+low <- a[1,]
+high <- a[2,]
+qt.1 <- a[3,]
+qt.3 <- a[4,]
+fit <- apply(phat, 2, mean) 
+plotdata <- as.data.frame(cbind(low, high, fit, qt.1, qt.3))
+plotdata$development <- development
+
+#in ggplot2
+ggplot() +
+  geom_line(data = plotdata, aes(x = development, y =fit)) + 
+  geom_line(data = plotdata, aes(x = development, y =high), linetype="dashed", color="blue") + 
+  geom_line(data = plotdata, aes(x = development, y =low), linetype="dashed", color="blue") + 
+  geom_rug(data = play, aes(x= development)) +
+  xlab("Level of Development (95% CI)") + 
+  ylab("Expected Values E(Y|X)") + 
+  ggtitle("Marginal Effect of Development")+
+  geom_ribbon(data=plotdata, aes(x=development, ymin=low, ymax=high), alpha=0.2) +
+  geom_ribbon(data=plotdata, aes(x=development, ymin=qt.1, ymax=qt.3), alpha=0.6)
+
+```
+
 
 # 3. Or use vanilla GLM code
 ```{r, message=FALSE, warning=FALSE}
@@ -93,13 +129,14 @@ plotdata$low <- plotdata$fit - 1.96*plotdata$se
 plotdata$high <- plotdata$fit + 1.96*plotdata$se
 plotdata$development <- development
 
-ggplot(data = plotdata, aes(x = development)) +
-    geom_line(aes(y =fit)) + 
-  geom_line(aes(y =high), linetype="dashed", color="blue") + 
-  geom_line(aes(y =low), linetype="dashed", color="blue") + 
+ggplot() +
+  geom_line(data = plotdata, aes(x = development, y =fit)) + 
+  geom_line(data = plotdata, aes(x = development, y =high), linetype="dashed", color="blue") + 
+  geom_line(data = plotdata, aes(x = development, y =low), linetype="dashed", color="blue") + 
+  geom_rug(data = play, aes(x= development)) +
   xlab("Level of Development (95% CI)") + 
   ylab("Expected Values E(Y|X)") + 
   ggtitle("Marginal Effect of Development")+
-  geom_ribbon(aes(ymin=low, ymax=high), alpha=0.5)
+  geom_ribbon(data=plotdata, aes(x=development, ymin=low, ymax=high), alpha=0.5)
 ```
 
