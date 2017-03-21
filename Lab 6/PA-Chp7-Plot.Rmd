@@ -1,5 +1,5 @@
 ---
-title: 'Lab 6: Generalized Linear Regression'
+title: 'Answers for Plotting'
 author: "Hao Wang"
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output:
@@ -21,4 +21,85 @@ library(effects)
 library(ggplot2)
 library(Zelig)
 library(ZeligChoice)
+library(readstata13)
+play<- read.dta13('https://github.com/haowang666/POS603-Lab/blob/master/Lab%206/stdSingh.dta?raw=true')
 ```
+
+
+
+# 2. Run Zelig estimates
+```{r}
+zlogit <- zelig(voted ~severity*age + polinfrel + income + efficacy + partyID +
+                  dist_magnitude + enep + vicmarg_dist + 
+                  parliamentary + development, model ="logit", data=play, cite = FALSE)
+summary(zlogit)
+```
+
+# Run simulation
+```{r}
+#check range
+summary(play$development)
+```
+
+# Create data and run simulation
+```{r}
+#41 Xs
+x.sim <- setx(zlogit, development = seq(from = -2, to = 2, by = 0.1))
+s.out <- sim(zlogit, x = x.sim)
+```
+
+```{r}
+#plot(s.out)
+ci.plot(s.out, qi ="ev")
+```
+
+
+# Or use vanilla GLM code
+```{r, message=FALSE, warning=FALSE}
+glm <-  glm(formula = voted ~severity*age + polinfrel + income 
+                  + efficacy + partyID +
+                  dist_magnitude + enep + vicmarg_dist + 
+                  parliamentary + development, 
+              data = play, family = binomial(link = "logit"))
+development<-seq(-2,2,by=.1)
+attach(play)
+newdata <- as.data.frame(cbind(1,development,mean(severity),
+                            mean(age),mean(polinfrel),mean(income),
+                            mean(efficacy),mean(partyID),
+                            mean(vicmarg_dist),mean(parliamentary),
+                            mean(dist_magnitude),mean(enep)))
+
+colnames(newdata)<-c("constant","development",
+                     "severity","age","polinfrel","income",
+                     "efficacy","partyID","vicmarg_dist",
+                     "parliamentary","dist_magnitude","enep")
+#response offers expected value
+pr <- predict(glm, newdata = newdata, se.fit=TRUE, type="response")
+#what if you missed the command type="reaponse"?
+#you get linear prediction results
+pr2 <- predict(glm, newdata = newdata)
+fit2 <- 1/(1+exp(- pr2))
+cor(pr$fit, fit2)
+detach(play)
+```
+
+
+# Plot it
+```{r}
+plotdata <- as.data.frame(pr$fit)
+colnames(plotdata)<-c("fit")
+plotdata$se <- pr$se.fit
+plotdata$low <- plotdata$fit - 1.96*plotdata$se
+plotdata$high <- plotdata$fit + 1.96*plotdata$se
+plotdata$development <- development
+
+ggplot(data = plotdata, aes(x = development)) +
+    geom_line(aes(y =fit)) + 
+  geom_line(aes(y =high), linetype="dashed", color="blue") + 
+  geom_line(aes(y =low), linetype="dashed", color="blue") + 
+  xlab("Level of Development (95% CI)") + 
+  ylab("Expected Values E(Y|X)") + 
+  ggtitle("Marginal Effect of Development")+
+  geom_ribbon(aes(ymin=low, ymax=high), alpha=0.5)
+```
+
