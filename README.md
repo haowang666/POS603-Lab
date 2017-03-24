@@ -26,9 +26,10 @@ R codes for [Rethinking book](http://xcelab.net/rm/statistical-rethinking/).
 
 
 
-### Templates
+### Misc
 - [Why Use Rmarkdown](https://yihui.name/en/2012/06/enjoyable-reproducible-research/)
 - [Latex and Rmarkdown Templates](https://github.com/haowang666/LaTeX-examples)
+- [Happy Git and Github](http://happygitwithr.com)
 
 
 
