@@ -1,1 +1,4 @@
-Lab 8 covers Bayesian models
+# Lab 8 covers count models
+ -  Poisson regression
+ -  Negative binomial
+ -  Zero-inflated models
