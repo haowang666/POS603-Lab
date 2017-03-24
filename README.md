@@ -5,6 +5,7 @@ This folder is created by Hao Wang as the tutoring materials of POS603 Polimetri
 R codes for [Rethinking book](http://xcelab.net/rm/statistical-rethinking/).
 
 
+
 ## Content
 ### Statistics
  - [Introduction to Rmarkdown and Data manipulation in R](https://github.com/haowang666/POS603-Lab/tree/master/Lab%201)
@@ -22,6 +23,8 @@ R codes for [Rethinking book](http://xcelab.net/rm/statistical-rethinking/).
  - [3D Plot](https://github.com/haowang666/POS603-Lab/blob/master/Lab%202/3d%20plot.Rmd)
  - [Predicted Probability Plot](https://github.com/haowang666/POS603-Lab/blob/master/Lab%206/PA-Chp7-Plot.Rmd)
  - [Extract Simulation from Zelig](http://www.haowang.pw/blog/Extract-Zelig-Simulation/)
+
+
 
 ### Templates
 - [Why Use Rmarkdown](https://yihui.name/en/2012/06/enjoyable-reproducible-research/)
