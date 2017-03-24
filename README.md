@@ -17,8 +17,10 @@ R codes is for [Rethinking book](http://xcelab.net/rm/statistical-rethinking/).
  - [GLM: Count Models](https://github.com/haowang666/POS603-Lab/tree/master/Lab%208)
 
 ### Graphing
- - [Marginal Effect](https://github.com/haowang666/POS603-Lab/blob/master/Lab%207/lab7.Rmd)
+ - [ggplot2 User Manual](http://ggplot2.org)
+ - [Marginal Effect Plot](https://github.com/haowang666/POS603-Lab/blob/master/Lab%207/lab7.Rmd)
  - [3D Plot](https://github.com/haowang666/POS603-Lab/blob/master/Lab%202/3d%20plot.Rmd)
+ - [Predicted Probability Plot](https://github.com/haowang666/POS603-Lab/blob/master/Lab%206/PA-Chp7-Plot.Rmd)
  - [Extract Simulation from Zelig](http://www.haowang.pw/blog/Extract-Zelig-Simulation/)
 
 ### Templates
