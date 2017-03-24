@@ -88,7 +88,8 @@ aic
 y <- logit$coefficients[1]+ logit$coefficients[2]*10 + logit$coefficients[3]*1 + logit$coefficients[4]*10
 #Then apply it to the logistic function 
 #logistic funtion is???
-
+pr <- 1/(1+exp(-y))
+pr
 ```
 
 
