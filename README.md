@@ -5,8 +5,8 @@ This folder is created by Hao Wang as the tutoring materials of POS603 Polimetri
 R codes is for [Rethinking book](http://xcelab.net/rm/statistical-rethinking/).
 
 
-##Content
-
+## Content
+### Statistics
  - [Introduction to Rmarkdown and Data manipulation in R](https://github.com/haowang666/POS603-Lab/tree/master/Lab%201)
  - [Descriptive Statistics and ggplo2](https://github.com/haowang666/POS603-Lab/tree/master/Lab%202)
  - [Probability Distributions](https://github.com/haowang666/POS603-Lab/tree/master/Lab%203)
@@ -15,6 +15,15 @@ R codes is for [Rethinking book](http://xcelab.net/rm/statistical-rethinking/).
  - [Interaction and Diagnostics](https://github.com/haowang666/POS603-Lab/tree/master/Lab%207)
  - [GLM: Binary and Ordered Models, Multinomial Models](https://github.com/haowang666/POS603-Lab/tree/master/Lab%206)
  - [GLM: Count Models](https://github.com/haowang666/POS603-Lab/tree/master/Lab%208)
+
+### Graphing
+ - [Marginal Effect](https://github.com/haowang666/POS603-Lab/blob/master/Lab%207/lab7.Rmd)
+ - [3D Plot](https://github.com/haowang666/POS603-Lab/blob/master/Lab%202/3d%20plot.Rmd)
+ - [Extract Simulation from Zelig](http://www.haowang.pw/blog/Extract-Zelig-Simulation/)
+
+### Templates
+- [Why Use Rmarkdown](https://yihui.name/en/2012/06/enjoyable-reproducible-research/)
+- [Latex and Rmarkdown Templates](https://github.com/haowang666/LaTeX-examples)
 
 
 
