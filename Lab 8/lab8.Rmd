@@ -4,331 +4,178 @@ author: "Hao Wang"
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output:
   pdf_document: default
-  html_document: default
+  keep_tex: yes
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Reading Materials:
+[R for Count Models](https://www.jstatsoft.org/article/view/v027i08)
+
+[Interaction in Logistic Regressions](http://onlinelibrary.wiley.com/doi/10.1111/j.1540-5907.2009.00429.x/epdf)
+
 
 # 1. Load essential packages
 ```{r, message=FALSE}
 library(effects)
 library(ggplot2)
+library(MASS)
 library(Zelig)
 library(ZeligChoice)
+library(pscl)
 ```
-
 
 
 
 # 2. Poisson
+If your DV follows a poisson distribution: 
+
+The Poisson distribution is a discrete probability distribution that expresses the probability of a given number of events occurring in a fixed interval of time and/or space if these events occur with a known average rate and independently of the time since the last event. The Poisson distribution can also be used for the number of events in other specified intervals such as distance, area or volume. For instance, an individual keeping track of the amount of mail they receive each day may notice that they receive an average number of 4 letters per day. 
+
+$$f(x; \lambda) = \frac{\lambda^{x}e^{-\lambda}}{x!}$$
+
+$$x! = x(x-1)(x-2)(x-3)...2*1$$
+
+$\lambda$ is the mean and variance of poisson distribution. We can simulate poisson distribution in R
+```{r poisson}
+set.seed(1)
+x <- rpois(10000, 1) #1000 poisson random numbers, lambda is 1
+probability <-dpois(x, 1) 
+hist(x)
+```
+
+
+
+#2.1 Code in GLM
+```{r}
+mydata<-read.csv("http://j.mp/PRESenergy")
+energy.poisson<-glm(Energy~rmn1173+
+     grf0175+grf575+jec477+jec1177+
+     jec479+embargo+hostages+oilc+
+     Approval+Unemploy,
+     family=poisson(link=log),
+     data=mydata)
+summary(energy.poisson)
+```
+
+
+# 2.2 Zelig
+```{r}
+zpoisson <- zelig(Energy~rmn1173+
+     grf0175+grf575+jec477+jec1177+
+     jec479+embargo+hostages+oilc+
+     Approval+Unemploy, model = "poisson", data = mydata)
+summary(zpoisson)
+```
+
+
+
 
 
 # 3. Negative Binomial
+Definition:
+
+Assume Bernoulli trials — that is, (1) there are two possible outcomes, (2) the trials are independent, and (3) p, the probability of success, remains the same from trial to trial. Let X denote the number of trials until the rth success. Then, the probability mass function of X is:
+
+$$f(x; r, p) = P(X =x) = {x -1 \choose r-1}(1-p)^{x -r}p^{r} $$
+
+
+Remember that the Poisson distribution assumes that the mean and variance are the same. Sometimes, your data show extra variation that is greater than the mean. This situation is called over-dispersion and negative binomial regression is more flexible in that regard than Poisson regression (you could still use Poisson regression in that case but the standard errors could be biased). The negative binomial distribution has one parameter more than the Poisson regression that adjusts the variance independently from the mean. In fact, the Poisson distribution is a special case of the negative binomial distribution.
+
+$$f(y;\mu,\theta) = \frac{\Gamma(y+\theta)}{\Gamma(\theta)*y!} \frac{\mu^y \theta^\theta}{(\mu + \theta)^{y + \theta}}$$
+
+#GLM.nb
+```{r}
+energy.nb<-glm.nb(Energy~rmn1173+
+     grf0175+grf575+jec477+jec1177+
+     jec479+embargo+hostages+oilc+
+     Approval+Unemploy,
+     data=mydata)
+summary(energy.nb)
+```
+
+
+#Zelig
+
+```{r}
+znb <- zelig(Energy~rmn1173+
+     grf0175+grf575+jec477+jec1177+
+     jec479+embargo+hostages+oilc+
+     Approval+Unemploy, model = "negbin", data = mydata)
+summary(znb)
+```
+
+
 
 
 # 4. Zero-inflated Models
+[check this](http://stats.idre.ucla.edu/r/dae/zinb/)
 
-
-With the logistic transformation, the outcome has a range of (0,1), we can simulate its outcome.
-
-```{r}
-x <- seq(-10, 10, by =0.1)
-prob <- 1/(1+ exp(-x))
-plot(x, prob, type = "b", main = "Logistic Function")
-```
-
-### 2.1.b Logistic Regression R Codes
-Use gender as an example, we can interpret the regression result with odds ratio.
-Odds ratio: the ratio of the probability the event occurs to the probability it does not occur
-$$odds = \frac{p}{1-p}$$
-In this example the odds ratio percentage change is -21%, which means on average the odds of being a volunteer will diminish by 21% if the subject is male. 
-
-We can also get the predicted probability by the predict fucntion. 
+Zero inflated models deal with excess zero counts. They are two-component mixture models combining a point mass at zero with a count distribution such as Poisson, geometric or negative binomial. Thus, there are two sources of zeros: zeros may come from both the point mass and from the count component. For modeling the unobserved state (zero vs count), a binary model is used: in the simplest case only with an intercept but potentially containing regressors.
 
 
 
+## 4.1 Example
 
-
-```{r, message=FALSE}
-#Load Cowles data from the effects package
-#Explanation 
-help(Cowles)
-mydata <- Cowles
-summary(mydata)
-logit <- glm(formula = volunteer ~ neuroticism + sex + extraversion,
-             data = mydata, family = binomial(link = "logit"))
-summary(logit)
-
-#get odds ratio
-100*(exp(logit$coefficients[-1])-1)
-
-#prediction of a certain point 
-new <- data.frame(sex = "male", extraversion = 10, neuroticism =10)
-predict(logit, newdata = new, type = 'response')
-
-#we can also calculate the AIC by hand
-#the formula is deviance + 2*(p+1), while p is the number of variables
-aic <- logit$deviance+ 2*(4)
-aic
-```
-
-
-- Lab Practice 1: based on the logistic funtion, can you get the predicted outcome with the coefficients given by the summary table?
-
-```{r}
-#we can compute the prediction by hand
-y <- logit$coefficients[1]+ logit$coefficients[2]*10 + logit$coefficients[3]*1 + logit$coefficients[4]*10
-#Then apply it to the logistic function 
-#logistic funtion is???
-
-```
-
-
-### 2.1.c Compare the results between logit and regular lm
-
-```{r}
-yhat.log <- predict(logit, data=mydata, type = 'response')
-lm <- lm(as.numeric(volunteer) ~ neuroticism + sex + extraversion, data = mydata)
-yhat.lm <- predict(lm, data=mydata)
-mydata$yhat.log <- yhat.log
-mydata$yhat.lm  <- yhat.lm
-ggplot(data = mydata, aes(factor(volunteer), yhat.log)) +
-      geom_boxplot() +
-      ggtitle("Logit Model") +
-      geom_jitter(alpha = .5) +
-      theme(plot.title = element_text(hjust = 0.5))
-
-ggplot(data = mydata, aes(factor(volunteer), yhat.lm)) +
-      geom_boxplot() +
-      geom_jitter(alpha = .5) +
-      ggtitle("lm Prediction (Pay attention to the range)") +
-      theme(plot.title = element_text(hjust = 0.5))
-
-
-```
-
-
-
-
-
-
-
-
-## 2.2 Probit Model
-Probit model share the similar idea with logit model, but in the probit case we are doing a gaussian transformation (the CDF funtion of a standard normal distribution). 
-
-### 2.2.a Probit Function
-It's simply the CDF funtion of a standard normal distribution
-
-$$\Phi(y) = \frac{1}{\sqrt{2\pi}}\int_{-\infty}^{y}e^{-t^2/2}dt$$
-And y is the linear combination 
-$$y = XB = \beta_0 + \beta_1*x_1 + \beta_2*x_2 ...$$
-
-```{r}
-probit <- glm(formula = volunteer ~ neuroticism + sex + extraversion, 
-              data = mydata, family = binomial(link = "probit"))
-summary(probit)
-
-#prediction of a certain point 
-new <- data.frame(sex = "male", extraversion = 10, neuroticism =10)
-predict(probit, newdata = new, type = 'response')
-```
-
-- Lab Practice 2: pick another observation (you need to set values for sex, extraversion and neuroticism), compare the results of logit model and probit model.
-
-
-
-# 3. Ordered Model
-When our DV is an ordered/ranked outcome, such as 'bad', 'ok', 'good'; or 'unlikely', 'somewhat likely', 'very likely', we need to use ordered model.
-
-```{r}
-mydata <- WVS
-summary(mydata)
-help(WVS)
-#convert our DV to an ordered factor
-mydata$poverty <- ordered(as.factor(mydata$poverty))
-#change reference level to USA
-mydata$country <- relevel(mydata$country, ref="USA")
-#overview
-table(mydata$poverty, mydata$country)
-```
-
-## 3.1 Ordered Logit
-```{r}
-# the function y~. means regressing y on the rest variables
-ologit <- polr(poverty ~., method = 'logistic', data = mydata)
-summary(ologit)
-```
-
-
-### 3.1.b Ologit Interpretation 
-(Also see PA book p.114) Standard interpretation of the ordered logit coefficient is that for a one unit increase in the predictor, the response variable level is expected to change by its respective regression coefficient in the ordered log-odds scale while the other variables in the model are held constant. For instance, the religious `YES' will increase the response variable level by am ordered log-odds scale of 0.179. 
-
-We can also interpret it in terms of odds ratio. One unit increase of age, the odds that they will report `too little work' relative to any higher categories will increase by 1.12. 
-
-```{r}
-100*(exp((ologit$coefficients))  -1)
-```
-
-Prediction can be done in a similar way with logit model.
-```{r}
-new <- data.frame(country = "Norway", religion = "no", age =50, degree="no", gender="female")
-predict(ologit, newdata = new, type = "prob")
-```
-
-
-
-
-
-# 4. Introduction of Zelig Project.
-Website: [click here](http://docs.zeligproject.org/en/latest/vignette.html)
-Zelig allows a unified grammar in estimating generalized linear models, besides it provides an easy way of simulating probability distributions.
-
-## 4.1 Logit Model
-
-
-```{r, message=FALSE, cathe=FALSE}
-mydata <- Cowles
-zlogit <- zelig(volunteer ~neuroticism + sex + extraversion, model ="logit", data=mydata)
-summary(zlogit)
-```
-
-We can simulate the results by sim() and setx(). (Stata package clarify uses the same command, if you're familar with Stata)
-
-```{r,warning=FALSE}
-x.zlogit <- setx(zlogit, sex="female", neuroticism = 10, extraversion =10)
-zlogit.out <- sim(zlogit, x=x.zlogit)
-summary(zlogit.out)
-plot(zlogit.out)
-```
-
-Use the similar logit we can calculate the differences at lower level Xs and higher level Xs.
+The state wildlife biologists want to model how many fish are being caught by fishermen at a state park. Visitors are asked how long they stayed, how many people were in the group, were there children in the group and how many fish were caught. Some visitors do not fish, but there is no data on whether a person fished or not. Some visitors who did fish did not catch any fish so there are excess zeros in the data because of the people that did not fish
 
 ```{r, warning=FALSE}
-#when not specified, other variables are held at mean level
-x.high <- setx(zlogit, neuroticism = quantile(mydata$neuroticism, prob = 0.75), sex="male")
-x.low <- setx(zlogit, neuroticism = quantile(mydata$neuroticism, prob = 0.25), sex="male")
-s.out2 <- sim(zlogit, x = x.high, x1 = x.low)
-summary(s.out2)
-#plot(s.out2)
+zinb <- read.csv("http://www.ats.ucla.edu/stat/data/fish.csv")
+zinb <- within(zinb, {
+  nofish <- factor(nofish)
+  livebait <- factor(livebait)
+  camper <- factor(camper)
+})
+
+summary(zinb)
 ```
 
-
-We can plot the marginal effect by setx to a sequence of values
-
-
-```{r, warning=FALSE}
-#easy way
-#simulation first
-#the default output of zelig is 1000 simulation at each list of x
-x.sim <- setx(zlogit, neuroticism = seq(from = 0, to = 24, by = 1))
-s.out3 <- sim(zlogit, x = x.sim)
-plot(s.out3)
-```
-
-
-
-```{r, warning=FALSE}
-#`hard' way
-set.seed(1)
-z.out <- zelig(volunteer ~neuroticism + sex + extraversion, model ="logit", data=mydata, cite = FALSE)
-neuro.range <- seq(from = 0, to = 24, by = 1)
-x <- setx(z.out, neuroticism = neuro.range)
-s.out <- sim(z.out, x = x)
-
-#extract ev
-myev <- s.out$get_qi(qi='ev', xvalue = 'range')
-#convert the list into matrix
-myev2 <- as.data.frame(matrix(unlist(myev), nrow =1000))
-#create plot data
-a<- apply(myev2, 2, quantile, probs = c(0.025,0.975, 0.25, 0.75)) 
-low <- a[1,]
-high <- a[2,]
-qt.1 <- a[3,]
-qt.3 <- a[4,]
-mean <- apply(myev2, 2, mean) 
-
-plotdata <- as.data.frame(cbind(low, high, mean, qt.1, qt.3))
-plotdata$neuroticism <- seq(from = 0, to = 24, by =1)
-
-
-#plot in ggplot2
-ggplot(data=plotdata, aes(x = neuroticism))+ 
-  geom_line(aes(y =mean)) + 
-  geom_line(aes(y =high), linetype="dashed", color="blue") + 
-  geom_line(aes(y =low), linetype="dashed", color="blue") + 
-  geom_line(aes(y =qt.1), linetype="dashed", color="blue") + 
-  geom_line(aes(y =qt.3), linetype="dashed", color="blue") + 
-  xlab("Level of Neuroticism (95% CI)") + 
-  ylab("Expected Values E(Y|X)") + 
-  ggtitle("Marginal Effect of Neuroticism")+ 
-  geom_ribbon(aes(ymin=low, ymax=high), alpha=0.1)+
-  geom_ribbon(aes(ymin=qt.1, ymax=qt.3), alpha=0.6)
-```
-
-
-
-## 4.2 Ordered Logit Model
-```{r}
-#Load Data and make sure our DV is in ordered
-mydata <- WVS
-mydata$poverty <- factor(mydata$poverty, ordered = TRUE, levels = c("Too Little", "About Right", "Too Much"))
-summary(mydata$poverty)
-#change reference level to USA
-mydata$country <- relevel(mydata$country, ref="USA")
-```
-
-Apply the Zelig Function
+A zero inflated model assumes that zero outcome is due to two different processes. For instance, in the example of fishing presented here, the two processes are that a subject has gone fishing vs. not gone fishing. If not gone fishing, the only outcome possible is zero. If gone fishing, it is then a count process. The two parts of the a zero inflated model are a binary model, usually a logit model to model which of the two processes the zero outcome is associated with and a count model, in this case, a negative binomial model, to model the count process. The expected count is expressed as a combination of the two processes. We are going to use the variables child and camper to model the count in the part of negative binomial model and the variable persons in the logit part of the model.
 
 ```{r}
-z.ologit <- zelig(poverty ~ country + religion + age + degree, data=mydata, model="ologit", cite = FALSE)
-summary(z.ologit)
-```
-
-Set the explanatory variables to their observed values and simulate fitted values given x.out and view the results:
-
-```{r}
-x.out <- setx(z.ologit)
-s.out <- sim(z.ologit, x = x.out)
-summary(s.out)
-plot(s.out)
+m1 <- zeroinfl(count ~ child + camper | persons,
+  data = zinb, dist = "negbin", EM = TRUE)
+summary(m1)
 ```
 
 
-## 4.3 Multinomial Logit Model
-Multinomial logit model should be applied when our DV contains multiple nominal categories
 
-We load the British Election Panel Study, in which the DV is the vote choice (Conservative, Labour and Liberal Democrat)
 
-```{r}
-#Load British Election Panel Study
-mydata <- BEPS
-summary(mydata$vote)
-```
 
-Apply zelig function of mlogit. 
 
-In the default model, the reference cotegory is the last level and will be omitted. You can change the reference level in the way I did for ountries in the previous sections. Essentially in multinomial model our software is estimating k-1 models, while k is the number of the categories of the DV. Therefore, since the parameter estimates are relative to the referent group, the standard interpretation of the multinomial logit is that for a unit change in the predictor variable, the logit of outcome m relative to the referent group is expected to change by its respective parameter estimate (which is in log-odds units) given the variables in the model are held constant. 
 
-```{r}
-z.out <-  zelig(vote ~ age + economic.cond.national + economic.cond.household + gender + political.knowledge, data=mydata, model="mlogit")
-summary(z.out)
-```
 
-We can also simulte the results in a similar way
+# 5. Interaction in Logistic Regressions
+In linear regression we have the general interaction form:
 
-```{r}
-x.weak <- setx(z.out, economic.cond.national = 1, economic.cond.household = 1, age =45,
-               gender ="male", political.knowledge = 2)
-x.strong <- setx(z.out, economic.cond.national = 4, economic.cond.household = 4, age =45,
-                 gender="male", political.knowledge = 2)
-s.out.mlogit <- sim(z.out, x = x.strong, x1 = x.weak)
-summary(s.out.mlogit)
-plot(s.out)
-```
+$$\hat{Y} =\beta_0  \beta_1 X_1  + \beta_2 X_2 + \beta_{12} X_1 X_2 $$
+
+In logistic regression, we model our desired outcome as a logistic function of latent variable $Y^*$
+$$L(Y^*) = \frac{1}{1+ e^{-y^*}}$$
+
+$$Pr(Y) = L(Y^*) = L(\beta_0  \beta_1 X_1  + \beta_2 X_2 + \beta_{12} X_1 X_2)$$
+$$Pr(Y) = \frac{1}{1+e^{-(\beta_0  \beta_1 X_1  + \beta_2 X_2 + \beta_{12} X_1 X_2)}}$$
+
+
+Assume our product term is meanful, the magnitude of interaction term $X_1X_2$ is the second derivative 
+
+$$\frac{\partial^2 Pr(Y)}{\partial X_1 X_2} = Pr(Y)(1 - Pr(Y)) \beta_{12} + $$
+$$Pr(Y)(1 - Pr(Y))(1-2Pr(Y)) (\beta_1 + \beta_{12} X_2 ) (\beta_2 + \beta_{12} X_1)$$
+
+The magnitude depends on both $X_1$ and $X_2$!
+
+If you REALLY want to include an interaction:
+
+ - You have theoretical expectation that there is an interaction effect between $X_1$ and $X_2$ to the latent value $Y^*$ Note: this is not equivalent to the expected outcome!
+ - Compare your interaction model with the model without interaction, does that AIC decrease?
+ - Plot your effect on marginal probability.
+
+
+
+
+
 
 
 
