@@ -48,7 +48,7 @@ hist(x)
 
 
 
-#2.1 Code in GLM
+## 2.1 Code in GLM
 ```{r}
 mydata<-read.csv("http://j.mp/PRESenergy")
 energy.poisson<-glm(Energy~rmn1173+
@@ -61,7 +61,7 @@ summary(energy.poisson)
 ```
 
 
-# 2.2 Zelig
+## 2.2 Zelig
 ```{r}
 zpoisson <- zelig(Energy~rmn1173+
      grf0175+grf575+jec477+jec1177+
@@ -77,7 +77,7 @@ summary(zpoisson)
 # 3. Negative Binomial
 Definition:
 
-Assume Bernoulli trials — that is, (1) there are two possible outcomes, (2) the trials are independent, and (3) p, the probability of success, remains the same from trial to trial. Let X denote the number of trials until the rth success. Then, the probability mass function of X is:
+Assume Bernoulli trials, that is, (1) there are two possible outcomes, (2) the trials are independent, and (3) p, the probability of success, remains the same from trial to trial. Let X denote the number of trials until the rth success. Then, the probability mass function of X is:
 
 $$f(x; r, p) = P(X =x) = {x -1 \choose r-1}(1-p)^{x -r}p^{r} $$
 
@@ -86,7 +86,7 @@ Remember that the Poisson distribution assumes that the mean and variance are th
 
 $$f(y;\mu,\theta) = \frac{\Gamma(y+\theta)}{\Gamma(\theta)*y!} \frac{\mu^y \theta^\theta}{(\mu + \theta)^{y + \theta}}$$
 
-#GLM.nb
+## 3.1 GLM.nb
 ```{r}
 energy.nb<-glm.nb(Energy~rmn1173+
      grf0175+grf575+jec477+jec1177+
@@ -97,7 +97,7 @@ summary(energy.nb)
 ```
 
 
-#Zelig
+## 3.2 Zelig
 
 ```{r}
 znb <- zelig(Energy~rmn1173+
