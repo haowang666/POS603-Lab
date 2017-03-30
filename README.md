@@ -4,6 +4,8 @@ This folder is created by Hao Wang as the tutoring materials of POS603 Polimetri
 
 R codes for [Rethinking book](http://xcelab.net/rm/statistical-rethinking/).
 
+Feel free to open an issue if you have any suggestions.
+
 
 
 ## Content
