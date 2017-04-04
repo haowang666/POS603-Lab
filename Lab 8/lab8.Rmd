@@ -166,11 +166,16 @@ $$Pr(Y)(1 - Pr(Y))(1-2Pr(Y)) (\beta_1 + \beta_{12} X_2 ) (\beta_2 + \beta_{12} X
 
 The magnitude depends on both $X_1$ and $X_2$!
 
-If you REALLY want to include an interaction:
+Several hints:
+Also read [this](https://www.cambridge.org/core/journals/political-science-research-and-methods/article/div-classtitlecompression-and-conditional-effects-a-product-term-is-essential-when-using-logistic-regression-to-test-for-interactiona-hreffn1-ref-typefnadiv/98664E6FF9AA240CCDBCFFC4B29EA7F8)
 
- - You have theoretical expectation that there is an interaction effect between $X_1$ and $X_2$ to the latent value $Y^*$ Note: this is not equivalent to the expected outcome!
- - Compare your interaction model with the model without interaction, does that AIC decrease?
+ - Logistic regression assumes interactions among variables by default.
+ - The significance sign of the product term does not indicate an interaction effect
+ - Instead, including interaction term adds the flexibility of the model, makes it possible for NONINTERACTION models.
+ - What interaction really mean: you have theoretical expectation that there is an interaction effect between $X_1$ and $X_2$ to the latent value $Y^*$ Note: this is not equivalent to the expected outcome!
  - Plot your effect on marginal probability.
+
+
 
 
 
