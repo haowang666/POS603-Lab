@@ -1,6 +1,6 @@
 # Jan 05 R wokshop
 
-This one day workshop is a gentle introduction to R. 
+This one day workshop is a gentle introduction to R. [click here]() for the Rmd codes.
 
 R is an integrated suite of software facilities for data manipulation, calculation and graphical display. Among other things it has
 
