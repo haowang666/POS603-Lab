@@ -36,10 +36,3 @@ Or, perhaps the most useful source is from online forums
 - [rmarkdown](http://rmarkdown.rstudio.com/)
 - [rbookdown](https://bookdown.org/yihui/bookdown/)
 
-## Getting Start
-
-## Basic Fuctions
-
-## Basic Data Management (introduce dplyr)
-
-## Basic Plot
