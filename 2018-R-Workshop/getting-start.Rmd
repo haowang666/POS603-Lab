@@ -1,0 +1,856 @@
+---
+output: 
+  bookdown::pdf_document2:
+    toc: true
+    citation_package: natbib
+    keep_tex: false
+    fig_caption: true
+    latex_engine: pdflatex
+title: "Getting started with R"
+author: 
+- Hao Wang (haowang.pw)
+- haowang@asu.edu
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+geometry: margin=1in
+fontfamily: mathpazo
+fontsize: 12pt
+spacing: double
+papersize: letter
+citecolor: blue
+header-includes: \usepackage{graphicx, longtable, float, subfigure}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+\pagebreak
+
+
+# Why R
+
+* It is a public-domain implementation of the widely regarded S statistical language,
+and the R/ S platform is a de facto standard among professional statisticians.
+
+* It is comparable, and often superior, in power to commercial products in most of
+the significant senses: variety of operations available, programmability, graphics,
+and so on.
+
+* It is available for the Windows, Mac, and Linux operating systems.
+
+* In addition to providing statistical operations, R is a general-purpose programming
+language, so you can use it to automate analyses and create new functions that
+extend the existing language features.
+
+* It incorporates features found in object-oriented and functional programming
+languages.
+
+* The system saves data sets between sessions, so you don't need to reload them
+each time. It saves your command history too.
+
+* Because R is open source software, it's easy to get help from the user community.
+Also, a lot of new functions are contributed by users, many of whom are prominent
+statisticians.
+
+
+
+
+# Install R and Rstudio
+
+- R can be downloaded from the [CRAN](https://cran.r-project.org/) prject.
+- [Rstudio](https://www.rstudio.com/products/rstudio/download/) is a commercial IDE (integrated development environment) for R, luckily for individual use it is free. R studio can generate fantastic dynamic decuments with R. For instance, by using [rmarkdown](http://rmarkdown.rstudio.com/lesson-1.html), you now say goodbye to copy and paste. This tutorial is written in Rstudio using `rmarkdown`, more intructions can be found [here](http://rmarkdown.rstudio.com/lesson-1.html).
+
+
+# Use a Script!!
+
+- very, very important, everytime when you start a project with R, keep all the codes in a script. **DO NOT write in console!**
+
+## In Rstudio:
+
+- Using raw script: go to top left, create a new r script
+- Using markdown:  go to top left, create a new rmarkdown(rmd) file
+
+## In R:
+- go to menu bar, *new script*
+
+## Exercise
+in Rstudio, create a new r script and a new Rmd file. Name it as "Rworkshop-YOURNAME"
+
+
+## Embed R codes in .Rmd file
+
+Markdown is a simple language for easy documentation. R codes cannot run directly in a rmd file, you need to specify the coding environment. For example
+
+```{r coding, echo=TRUE, warning=FALSE}
+print('hello world')
+```
+
+The codes for this is
+
+```
+ - ```{r chunkname, echo=TRUE, warning=FALSE}
+ - print('hello world')
+ - ```
+```
+
+the `{}` is the chunk environment setting. Mostly we use `r` (which is the programming language setting, you can name this chunk by replacing the `chunkname` part).
+
+For more options of the chunk, please refer to the [rmarkdown chunk manual](http://rmarkdown.rstudio.com/authoring_rcodechunks.html).
+
+
+# Basic data types
+
+R treat data in different ways, here I introduce five different types
+
+## Single element
+
+```{r, echo=TRUE}
+a <- 1
+a
+
+# The element can be a string value
+
+b <- "love"
+b
+```
+
+## Vector
+
+Vector can be presented as a list of elements. In linear algebra, a single row/column of a matrix is called row vector/ column vector.
+
+```{r, echo=TRUE}
+vector <- c(1, 2, 3, 4, 5)
+vector
+
+# vector can be constructed with a list of strings
+bvector <- c("happy", "new", "year")
+bvector
+```
+
+## Matrix
+
+A matrix contains multiple vectors, the following provides a simple example.
+
+```{r}
+A <- matrix(seq(from = 1, to = 9, by = 1), nrow = 3, byrow = TRUE)
+A
+```
+
+## Dataframe
+
+Perhaps the most common data we use in social science is dataframe, often imported from an existing database. For instance, this is an example of Boston housing price from the MASS package
+
+```{r}
+#install.packages("MASS")
+library(MASS)
+Boston <- Boston
+summary(Boston)
+View(Boston)
+```
+
+**Difference** : often it is hard to distinguish between matrix a dataframe, they look similar. However, the variables (often appears as columns in a dataframe) can consist of different types. General rule is: use data frames if columns (variables) can be expected to be of different types (numeric/character/logical etc.). 
+
+Matrices are for data of the same type. Consequently, the choice matrix/data.frame is only problematic if you have data of the same type. The answer depends on what you are going to do with the data in data.frame/matrix. If it is going to be passed to other functions then the expected type of the arguments of these functions determine the choice.
+
+Matrices are a necessity if you plan to do any linear algebra-type of operations.
+
+Data frames are more convenient if you frequently refer to its columns by name (via the compact $ operator).
+
+Data frames are also better for reporting (printing) tabular information as you can apply formatting to each column separately.
+
+We can convert a matrix to a dataframe by function `as.data.frame()`, a dataframe can also be converted into a matrix by function `data.matrix()`
+
+```{r}
+# convert matrix A to dataframe
+data.A <- as.data.frame(A)
+
+# convert Boston to matrix
+matrix.Boston <- data.matrix(Boston)
+```
+
+## list
+
+**List** is somewhat different in R, a list in general can be constructed with ANY thing, you can put a single value, a vector, a matrix, or a dataframe in a list environment. 
+
+```{r}
+mylist <- list()
+mylist$A <- A
+mylist$data.A <- data.A
+mylist$Boston <- Boston
+```
+
+List is very common in the statistical outputs. You can extract information from a list by `$` operator. For example
+
+```{r}
+lm <- lm(medv ~ crim + age, data = Boston)
+```
+
+We see the new list `lm` is a list of 12 different objects. 
+
+```{r}
+coef <- lm$coefficients
+coef
+```
+
+
+# Common operators
+
+This section introduces some common operators in R.
+
+## assign operator
+
+*  `<-` :  This is the assign operator, which is the most common operator in R, assigning something
+*  `=` : This one depends, usually it is an assign operator, sometimes it is an environmental setting. I reconmmend using `<-` whenever you're creating something new.
+
+## math operators
+
+* `+`,  `-`,  `*`,  `/`, `^` 
+
+```{r}
+1 + 3
+6 - 7
+2*34
+100/2
+3^2
+```
+
+
+## relational operators 
+
+* `==`, `<`, `>`, `>=`, `<=`
+
+```{r}
+3 == 2
+print(3 == 2)
+3 > 2
+print(3 > 2)
+3 < 2
+3 >= 2
+3 <= 2
+```
+
+
+
+
+
+# Linear algebra quick review
+
+## Example
+Linear algebra provides a way of compactly representing and operating on sets of linear equations. For example, consider the following two equations:
+
+$$4x_1 - 5x_2 = -13$$
+$$-2x_1 + 3x_2 = 9$$
+
+There are two equations with two variables, from the higgh school algebra you can find unique solutions for $x_1$ and $x_2$. This problem can be written in a matrix format
+
+$$\mathbf{A}x = \mathbf{b}$$
+$$\mathbf{A} = \left[\begin{array}{rr}
+4 & -5\\
+-2 & 3
+\end{array}
+\right]$$
+
+
+$$\mathbf{b} = \left[\begin{array}{r} 
+-13 \\
+9
+\end{array}\right]$$
+
+often a lower case letter represents a single vector, an upper case letter represents a matrix. A known real number in linear algebra is called scalar.
+
+
+## Notation
+* vector notation
+let *x* be a vector with n elements 
+
+$$x = \left[\begin{array}{c} 
+x_1 \\
+x_2 \\
+x_3 \\
+x_4\\
+\vdots \\
+x_n
+\end{array}\right]$$
+
+* matrix notation
+
+let A be a 3*3 matrix 
+
+$$\mathbf{A} = \left[\begin{array}{rrr} 
+a_{11} & a_{12} & a_{13} \\
+a_{21} & a_{22} & a_{23} \\
+a_{31} & a_{32} & a_{33} \\
+\end{array}\right]$$
+
+## Operation
+
+* matrix addition
+
+$$ \left[\begin{array}{rrr} 
+3 & 4 & 1 \\
+6 & 7 & 0 \\
+-1 & 3 & 8 \\
+\end{array}\right] 
++
+\left[\begin{array}{rrr} 
+-1 & 0 & 7 \\
+6 & 5 & 1 \\
+-1 & 7 & 0 \\
+\end{array}\right]
+= 
+\left[\begin{array}{rrr} 
+2 & 4 & 8 \\
+12 & 12 & 1 \\
+-2 & 10 & 8 \\
+\end{array}\right] $$
+
+* multiplication
+
+$$\mathbf{A} = \left[\begin{array}{rrr} 
+a_{11} & a_{12} & a_{13} \\
+a_{21} & a_{22} & a_{23} \\
+\end{array}\right]$$
+
+$$\mathbf{B} = \left[\begin{array}{rr} 
+b_{11} & b_{12}  \\
+b_{21} & b_{22}  \\
+b_{31} & b_{32}  \\
+\end{array}\right]$$
+
+$$\mathbf{AB} = \left[\begin{array}{rrr} 
+a_{11} & a_{12} & a_{13} \\
+a_{21} & a_{22} & a_{23} \\
+\end{array}\right] \left[\begin{array}{rr} 
+b_{11} & b_{12}  \\
+b_{21} & b_{22}  \\
+b_{31} & b_{32}  \\
+\end{array}\right] = \left[\begin{array}{rr} 
+a_{11}b_{11} + a_{12}b_{21} + a_{13}b_{31} & a_{11}b_{12} + a_{12}b_{22} + a_{13}b_{32}  \\
+a_{21}b_{11} + a_{22}b_{21} + a_{23}b_{31} & a_{21}b_{12} + a_{22}b_{22} + a_{23}b_{32}  \\
+\end{array}\right]$$
+
+$$ \mathbf{BA} = \left[\begin{array}{rr} 
+b_{11} & b_{12}  \\
+b_{21} & b_{22}  \\
+b_{31} & b_{32}  \\
+\end{array}\right] \left[\begin{array}{rrr} 
+a_{11} & a_{12} & a_{13} \\
+a_{21} & a_{22} & a_{23} \\
+\end{array}\right] = 
+\left[\begin{array}{rrr} 
+b_{11}a_{11} + b_{12}a_{21} & b_{11}a_{12}+ b_{12}a_{22} & b_{11}a_{13}+ b_{12}a_{23} \\
+b_{21}a_{11} + b_{22}a_{21} & b_{21}a_{12}+ b_{22}a_{22} & b_{21}a_{13}+ b_{22}a_{23}\\
+b_{31}a_{11} + b_{32}a_{21} & b_{31}a_{12}+ b_{32}a_{22} & b_{31}a_{13}+ b_{32}a_{23}
+\end{array}\right] $$
+
+**NOTE**: BA and AB are different!
+
+* transpose
+
+$$\mathbf{A} = \left[\begin{array}{rrr} 
+a_{11} & a_{12} & a_{13} \\
+a_{21} & a_{22} & a_{23} \\
+\end{array}\right]$$
+
+$$\mathbf{A}' =  
+\left[\begin{array}{rrr} 
+a_{11} & a_{12} & a_{13} \\
+a_{21} & a_{22} & a_{23} \\
+\end{array}\right]' = 
+\left[\begin{array}{rr} 
+a_{11} & a_{21}  \\
+a_{12} & a_{22}  \\
+a_{13} & a_{23}
+\end{array}\right]$$
+
+transpose is also writte as **t(A)**
+
+* inverse
+
+define a n $\times$ n matrix I as
+
+$$ \mathbf{I} =  \left[\begin{array}{cccc} 
+1 & 0 & \cdots & 0 \\
+0 & 1 & \cdots & 0 \\
+\vdots & \vdots & \ddots & \vdots \\
+0 & 0 & \vdots & 1
+\end{array}\right]$$
+
+This is called an identity matrix. For a nonsingular matrix A (inverse exists), we have
+
+$$\mathbf{AA}^{-1} = \mathbf{I}$$
+
+and $\mathbf{A}^{-1}$ is the inverse of matrix **A**.
+
+## matrix notation for linear regression
+
+Consider the following simple linear regression function:
+
+$$y_i = \beta_0  + \beta_1x_i +\epsilon_i $$
+$$ \begin{aligned}
+y_1 = \beta_0  + \beta_1x_1 +\epsilon_1 \\
+y_2 = \beta_0  + \beta_1x_2 +\epsilon_2 \\
+y_3 = \beta_0  + \beta_1x_3 +\epsilon_3 \\
+\vdots \\
+y_n = \beta_0  + \beta_1x_n +\epsilon_n
+\end{aligned} $$
+
+
+which is
+
+$$ Y =  X\beta + \epsilon$$
+$$Y = \left[\begin{array}{c} 
+y_1 \\
+y_2 \\
+y_3 \\
+\vdots \\
+y_n
+\end{array} \right] $$\
+
+$$X = \left[\begin{array}{cc} 
+1 & x_1 \\
+1 & x_2 \\
+1 & x_3 \\
+\vdots & \vdots\\
+1 & x_n 
+\end{array}\right] $$
+
+$$\beta = \left[\begin{array}{c} 
+\beta_0 \\
+\beta_1 
+\end{array}\right] $$
+
+$$\epsilon = \left[\begin{array}{c} 
+\epsilon_1 \\
+\epsilon_2 \\
+\epsilon_3 \\
+\vdots \\
+\epsilon_n
+\end{array}\right]$$
+
+and we can solve the OLS estimator $\beta$ by matrix operation
+
+We want to minimize 
+$$\sum{\epsilon}^2 = {\epsilon}'{\epsilon}$$ 
+which is 
+
+$$(Y-X\beta)'(Y-X\beta)$$ 
+
+Take derivatives, set to 0
+
+$$\frac{d}{d\beta}(Y-X\beta)'(Y-X\beta) = -2X'(Y-X\beta) = 0$$ 
+
+Therefore 
+
+$$X'Y=X'X\beta$$ 
+
+and 
+
+$$\beta = (X'X)^{-1}X'Y$$
+
+## matrix operators in R 
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+A <- matrix(rpois(9, 1), nrow = 3)
+B <- matrix(rnorm(9), nrow = 3)
+A
+B
+# Element-wise product 
+A*B
+
+# Addition
+A + B
+
+# Subtraction
+A - B
+
+# Matrix mutiplication
+A %*% B
+
+# Matrix transpose
+t(A)
+
+# Matrix inverse
+solve(B)
+
+# Generalized inverse 
+require(MASS)
+ginv(B)
+```
+
+
+
+# Write your own function
+
+R is very powerful at creating your own customized functions. Sometimes we are not satisfied by the `can` soluations. Here I provide an example of calculating means
+
+## basic setting
+
+```{r}
+myfunction.mean <- function(x){
+  temp <- sum(x)/length(x)
+  return(temp)
+}
+
+a <- seq(1, 100, by = 1)
+myfunction.mean(a)
+# compare with default function mean
+mean(a)
+```
+
+## function for linear regression
+
+We can write our own function for linear regression coefficients based on matrix natotions
+
+```{r}
+myols <- function(y, x){
+# add intercept
+  int <- rep(1, nrow(x))
+  x <- cbind(int, x) #combine orginal x and intercept
+  beta <- solve(t(x) %*% x) %*% t(x) %*% y
+  return(beta)
+}
+
+# generating randam numbers
+set.seed(1)
+y <- rnorm(100)
+x1 <- rpois(100, 1)
+x2 <- rnorm(100)
+x <- cbind(x1, x2)
+
+myols(y, x)
+# compare with the default function
+lm(y~x)
+```
+
+
+## a simple loop
+
+Sometimes we need to perform the same function for multiple times. For instance, we want to know the frequency of "1" in a list of random numbers
+
+```{r}
+x <- rpois(20, 1)
+x
+count1 <- function(x){
+  k <- 0 #initial value
+  for (i in 1:length(x)) {
+  if (x[i] == 1)
+  k <- k + 1
+  }
+  return(k)
+}
+count1(x)
+```
+
+
+# Workspace and importing files
+
+The workspace in R contains data and other objects. User defined objects
+created in a session will persist until R is closed. If the workspace is saved
+before quitting R, the objects created during the session will be saved. 
+
+## working directory
+
+It is convenient to create a folder or directory with a short path name to store
+data and codes. 
+
+```
+setwd() this is command to set up your working directory
+
+in Windows
+setwd("C:/Users/User Name/Documents/FOLDER")
+
+in Macs
+setwd("/Users/User Name/ Documents/FOLDER")
+```
+
+The working directory has to be a folder. You can either type in, or copy and pasted the appropriate pathway which you would like to work in.
+
+## install and using packages
+
+R packaages are reprodducible and reusable R-codes. They contain lots of convenient `can` functions, often packages published on CRAN are tested by R users. 
+
+To use certain functions in a R package, you need to install and run the packages first. The commands are
+
+```
+install.packages("package names")
+library(package names)
+```
+
+for example
+
+```
+install.packages("car")
+library(car)
+```
+
+**some useful packages**
+
+- dplyr: data management
+- ggplot2: graphing
+- stargazer: produce tables
+- plm: time-series cross-sectional 
+- glm: generalized linear models
+- foreign: can read multiple types of files into R
+
+## import raw datafiles
+
+R often has multiple ways to load an existing data into working memory. Here are some examples. First we need to setup a working directory.
+
+```{r}
+setwd("D:/git/POS603-Lab/2018-R-Workshop")
+#setwd("D:/git/POS603-Lab/2018-R-Workshop")
+getwd()
+```
+
+
+1. Read csv (comma separated values) file: use read.csv function
+```{r}
+#R can read files directly from the website
+mydata.csv <- read.csv('http://www.cyclismo.org/tutorial/R/_static/simple.csv', header = TRUE, sep = ",")
+write.csv(mydata.csv, "mydata.csv")
+#header option means taking the first row as variable names. 
+#sep option is determined by the way the data file is separated
+```
+
+2. Read txt 
+
+We create a txt data first and then import the txt file to R.
+```{r, warning=FALSE}
+require(car)
+write.table(cars,"cars.txt", sep = "\t")
+mydata.txt <- read.table("cars.txt")
+```
+
+3. Read dta(stata)
+   * For stata 12 and earlier (package 'foreign')
+   * For stata 13 and later (package'readstata13', this also works for earlier versions)
+   
+```{r, warning=FALSE}
+#install.packages(c('readstata13', 'foreign'))
+require(readstata13)
+require(foreign)
+stata14 <- read.dta13('stata14.dta')
+stata12 <- read.dta('stata12.dta')
+```
+
+
+
+
+
+# Simple data management
+
+## Create new variables
+```{r, warning=FALSE}
+library(car)
+mydata <- cars
+
+#creat new variable, which is the square of original variable
+mydata$speed2 <- (mydata$speed)^2
+
+#This line create dummny variables based on speed
+mydata$speed3 <- ifelse(mydata$speed > 10, 
+c("slow"), c("quick")) 
+mydata$speed3
+
+# another example: create 3 categories 
+mydata$speed4[mydata$speed < 10] <- "slow"
+mydata$speed4[mydata$speed >= 10 & mydata$speed < 18] <- "middle"
+mydata$speed4[mydata$speed >= 18] <- "quick"
+mydata$speed4
+```
+
+## Subsetting data
+
+```{r, warning=FALSE}
+require(car)
+mydata <- cars
+#selecting by observation values
+mydata.sub1 <- subset(mydata, subset = speed >= 10)
+
+#selecting by columns
+mydata.sub2 <- subset(mydata, select = c(speed))
+
+#reverse selecting
+mydata.sub3 <- subset(mydata, select = -c(speed))
+```
+
+
+
+# Working Example: Baylor's American Religious Survey
+
+```{r}
+library(ggplot2)
+library(MASS)
+library(readstata13)
+```
+
+The following R chunk load data from Baylor Regilious Survey. Baylor Religious Study is a comprehensive analysis on religious beliefs in the United States. For detailed explanation please refer to <http://www.thearda.com/Archive/Files/Descriptions/BAYLORW2.asp>. Total sample size is 1648 adults, with 318 variables, survey was conducted by Gallup. 
+
+
+```{r}
+#The first step is to load Byalor Religious Survey 2005 (I)
+mydata <- read.dta13("http://www.thearda.com/download/download.aspx?file=Baylor%20Religion%20Survey,%20Wave%20II%20(2007).DTA")
+```
+
+## Subsetting Data
+Because the raw file includes some missing points, I create a new dataset of potential interesting variables without missing data.
+
+```{r, warning=FALSE, message=FALSE}
+plotdata <- mydata[, c('relgious', 'attend', 'gaymarr', 'gayborn',
+                       'votefem', 'partyid')]
+#religious: how religious you are
+#attend:    how often do you attend church
+#gaymarr:   gay marriage should be legal
+#gayborn:   people are born either homo or heterosexual
+#vetefem:   would you vote for a female cadidate nominated by your party
+#partyid:   democract or republican
+plotdata <- na.omit(plotdata)
+
+```
+
+
+## Mean attitudes towards gay marriage
+```{r}
+summary(plotdata$gaymarr)
+mean(plotdata$gaymarr)
+```
+What happened? we got an error message since all the survey items are coded in the categorical way.
+
+* Convert categorical data into numeric 
+
+```{r}
+plotdata2 <- as.data.frame(sapply(plotdata, as.numeric))#sapply function returns matrix with same
+#legnth, and in the same time converted factors into numeric numbers by as.numeric command
+table(plotdata2$gaymarr)
+mean(plotdata2$gaymarr)
+```
+
+ - Question: How to interpret the mean value of plotdata2? Is it correct?
+ 
+* Recode variables
+```{r}
+plotdata2$gaymarr1 <- plotdata2$gaymarr
+plotdata2$gaymarr1[plotdata2$gaymarr1 == 5] <- NA
+mean(plotdata2$gaymarr1, na.rm = TRUE)
+median(plotdata2$gaymarr1, na.rm = TRUE)
+```
+
+* Get an overview by the summary() command
+
+```{r}
+summary(plotdata)
+```
+
+* Frenquency Table
+```{r}
+table(plotdata$gaymarr)
+```
+
+## Using ggplot2
+The ggplot2 package, created by Hadley Wickham, offers a powerful graphics language for creating elegant and complex plots. Its popularity in the R community has exploded in recent years. Origianlly based on Leland Wilkinson's The Grammar of Graphics, ggplot2 allows you to create graphs that represent both univariate and multivariate numerical and categorical data in a straightforward manner. Grouping can be represented by color, symbol, size, and transparency. The creation of trellis plots (i.e., conditioning) is relatively simple. 
+
+ggplot 2 reference guide: <http://docs.ggplot2.org/current/index.html#>
+
+ggplot 2 cheatsheet: <https://www.rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf>
+
+### Histogram
+This show the histogram of Attitudes on gay marriage
+```{r, warning=FALSE}
+library(ggplot2)
+hist.gay <- ggplot(plotdata, aes(x = gaymarr)) +
+            geom_histogram(stat="count", alpha =1) +
+            labs(x="Support for Gay Marriage", y="Number Counts") +
+            ggtitle("           Support for Gay Marriage Histogram")
+hist.gay
+```
+
+### Histogram according to religious degrees.
+
+```{r, warning=FALSE}
+hist.relig.gay <- ggplot(plotdata, aes(x =gaymarr, fill=relgious)) +
+                 geom_histogram(stat="count",alpha =1, position = "dodge")+
+                 ylab("Number Counts") +
+                 xlab("Support for Gay Marriage")+
+                 ggtitle("Support for Gay Marriage Histogram")
+hist.relig.gay
+```
+
+
+### Scatter Plot
+In scatter plot we write two parameters in the aes() option. I use additional option geom_count() here to illustrate the size.
+```{r}
+relig.gaymarr <- ggplot(data=plotdata, aes(y = relgious, x = gaymarr)) +
+                 geom_count() +
+                 scale_size_area() +
+                 ylab("Religious Beliefs") +
+                 xlab("Support for Gay Marriage")
+relig.gaymarr
+```
+
+### Adding lines 
+
+Let's use the default data from the car package here. It measures the relation between car speed and stop distance.
+
+```{r car}
+mydata <- cars
+car <- ggplot(data = mydata, aes(x = speed, y = dist)) +
+       geom_point(size = 0.5, color = "red")
+car
+```
+
+
+1. Method 1, use the default geom_smooth()
+```{r}
+car <- ggplot(data = mydata, aes(x = speed, y = dist)) +
+       geom_point(size=0.5, color = "red") +
+       geom_smooth(method = 'lm', se=TRUE)
+car
+```
+
+2. You can try other options of geom_smooth()
+
+LOESS is a nonparametric method that combine multiple regression models in a k-nearest-neighbor-based modeling. 
+```{r}
+car <- ggplot(data = mydata, aes(x = speed, y = dist)) +
+       geom_point(size=0.5, color = "red") +
+       geom_smooth(method = 'loess', se=TRUE)
+car
+```
+
+
+
+3. If you want full control over your line
+In this condition you need to calculate all the parameters of the line. Let's try with linear models
+
+```{r}
+lm <- lm(dist ~ speed, data = mydata)
+summary(lm)
+intercept <- summary(lm)$coefficients[1,1]
+slope <- summary(lm)$coefficients[2,1]
+
+car <- ggplot(data = mydata, aes(x = speed, y = dist)) +
+       geom_point(size = 0.5, color = "red") +
+       geom_abline(intercept = intercept, slope = slope)
+car
+```
+
+The summary(lm) command returns coefficients of the regression. In this case we need to extract intercept in row 1, column 1; and slope in row 2, column 1.
+
+
+# MISC: install stan packages for Bayesian analysis
+
+Please follow the guide on this page to install rethinking package.
+<http://xcelab.net/rm/software/>
+
+You need to run  the following code in R:
+
+```
+install.packages(c('rstan',' devtools','coda','mvtnorm','loo'))
+library(devtools)
+install_github("rmcelreath/ rethinking")
+library(rethinking)
+```
+
+
+
