@@ -11,7 +11,7 @@ Feel free to share and open an issue if you have any suggestions.
 ## Content
 
 ### One day R workshop (very, very briefly)
-- [R workshop]()
+- [R workshop](https://github.com/haowang666/POS603-Lab/tree/master/2018-R-Workshop)
 
 
 ### Statistics
