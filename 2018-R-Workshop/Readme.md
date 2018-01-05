@@ -1,4 +1,4 @@
-# Jan 05 R wokshop
+# 2018-Jan-05 R Workshop
 
 This one day workshop is a gentle introduction to R. [click here](https://raw.githubusercontent.com/haowang666/POS603-Lab/master/2018-R-Workshop/getting-start.Rmd) for the Rmd codes.
 
@@ -16,7 +16,7 @@ I recommend these materials for further exploration:
 - [The Art of R Programming](https://www.amazon.com/Art-Programming-Statistical-Software-Design/dp/1593273843/ref=sr_1_1?ie=UTF8&qid=1515029845&sr=8-1&keywords=the+art+of+r+programming)
 - [Statistical Computing Using R](https://www.amazon.com/Statistical-Computing-Chapman-Hall-CRC/dp/1584885459/ref=sr_1_1?s=books&ie=UTF8&qid=1515029903&sr=1-1&keywords=statistical+computing+with+r)
 
-Or, perhaps the most useful source is from online forums
+Or, perhaps the most useful tip is checking these online forums
 
 - [R blog](https://www.r-bloggers.com/)
 - [Stack Overflow](https://stackoverflow.com/questions/tagged/?tagnames=r&sort=active)
