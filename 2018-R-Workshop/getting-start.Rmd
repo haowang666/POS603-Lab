@@ -8,8 +8,9 @@ output:
     latex_engine: pdflatex
 title: "Getting started with R"
 author: 
-- Hao Wang (haowang.pw)
+- Hao Wang(haowang.pw)
 - haowang@asu.edu
+
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 geometry: margin=1in
 fontfamily: mathpazo
